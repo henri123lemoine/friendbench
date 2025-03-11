@@ -39,7 +39,7 @@ const quotesData = [
   {
     text: "Grok 3 is good. I change my mind about GPT-4.5. Kinda mid. Claude 3.6 still wins on FriendBench, even above 3.7",
     author: "Henri",
-    models: ["Grok 3", "GPT-4.5", "Sonnet 3.6", "Sonnet 3.7", "DeepResearch"]
+    models: ["Grok 3", "GPT-4.5", "Sonnet 3.6", "Sonnet 3.7"]
   },
   {
     text: "yeah I am surprisingly not enchanted with 3.7",
