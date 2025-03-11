@@ -22,11 +22,6 @@
       max-width: 880px;
       width: 100%;
       margin: 0 auto;
-      text-align: center;
-    }
-    h1 {
-      margin-bottom: 0.2em;
-      font-size: 28px;
     }
     @media (max-width: 600px) {
       body { padding: 10px; }
@@ -35,7 +30,6 @@
 </head>
 <body>
   <div class="container">
-    <h1>FriendBench™</h1>
     <div id="chart-container"></div>
   </div>
 
@@ -100,7 +94,7 @@
       width: 880,
       height: 500,
       margin: {
-        top: 60,
+        top: 40,
         right: 140,
         bottom: 100,
         left: 140
@@ -116,6 +110,11 @@
     // Background
     svg.innerHTML = `
       <rect width="${config.width}" height="${config.height}" fill="#f8f9fa"/>
+
+      <!-- Title -->
+      <text x="${config.width/2}" y="${config.margin.top - 10}"
+            font-family="Arial" font-size="28" font-weight="bold"
+            text-anchor="middle" fill="#333">FriendBench™</text>
 
       <!-- Axes -->
       <line x1="${config.margin.left}" y1="${config.margin.top}"
