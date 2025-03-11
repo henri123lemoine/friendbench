@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Define gradient -->
+    <defs>
+        <radialGradient id="friendGradient" cx="30%" cy="30%" r="70%" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#9370DB" /> <!-- Purple -->
+            <stop offset="50%" stop-color="#1E90FF" /> <!-- Blue -->
+            <stop offset="100%" stop-color="#3CB371" /> <!-- Green -->
+        </radialGradient>
+    </defs>
+
+    <!-- Background circle with gradient -->
+    <circle cx="16" cy="16" r="15" fill="url(#friendGradient)" />
+
+    <circle cx="11" cy="13" r="2.2" fill="white" /> <!-- Left eye -->
+    <circle cx="21" cy="13" r="2.2" fill="white" /> <!-- Right eye -->
+
+    <path d="M10 18.5C12 22 20 22 22 18.5" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none" />
+    <!-- Smile -->
+</svg>
