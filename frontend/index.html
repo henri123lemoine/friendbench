@@ -23,14 +23,113 @@
       width: 100%;
       margin: 0 auto;
     }
+    .quotes-section {
+      padding: 20px;
+    }
+    .quotes-title {
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 30px;
+      color: #333;
+    }
+    .quotes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    .quote-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease;
+      position: relative;
+    }
+    .quote-card:hover {
+      transform: translateY(-5px);
+    }
+    .quote-text {
+      font-size: 16px;
+      margin-bottom: 16px;
+      color: #2c3e50;
+      font-style: italic;
+    }
+    .quote-attribution {
+      font-size: 14px;
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .model-info {
+      display: inline-flex;
+      align-items: center;
+      cursor: help;
+      margin-left: 4px;
+    }
+    .model-icon {
+      width: 16px;
+      height: 16px;
+      fill: #1a73e8;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+    .model-icon:hover {
+      opacity: 1;
+    }
+    .model-inline {
+      color: #1a73e8;
+      font-weight: 500;
+      margin-left: 4px;
+    }
+    .tooltip {
+      visibility: hidden;
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 5px;
+      border-style: solid;
+      border-color: #333 transparent transparent transparent;
+    }
+    .model-info:hover .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
     @media (max-width: 600px) {
       body { padding: 10px; }
+      .quotes-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div id="chart-container"></div>
+    <div class="quotes-section">
+      <h2 class="quotes-title">Some thoughts from our High Taste Testers™</h2>
+      <div id="quotes-grid" class="quotes-grid"></div>
+    </div>
   </div>
 
   <script src="data.js"></script>
@@ -113,7 +212,7 @@
 
       <!-- Title -->
       <text x="${config.width/2}" y="${config.margin.top - 10}"
-            font-family="Arial" font-size="28" font-weight="bold"
+            font-family="Arial" font-size="32" font-weight="bold"
             text-anchor="middle" fill="#333">FriendBench™</text>
 
       <!-- Axes -->
@@ -180,6 +279,48 @@
     `;
 
     document.getElementById('chart-container').appendChild(svg);
+
+    // Populate quotes grid
+    const quotesGrid = document.getElementById('quotes-grid');
+    quotesData.forEach(quote => {
+      const quoteCard = document.createElement('div');
+      quoteCard.className = 'quote-card';
+
+      const quoteText = document.createElement('div');
+      quoteText.className = 'quote-text';
+      quoteText.textContent = `"${quote.text}"`;
+
+      const attribution = document.createElement('div');
+      attribution.className = 'quote-attribution';
+      attribution.textContent = `— ${quote.author}`;
+
+      // Add model reference (either inline or as icon)
+      if (quote.models && quote.models.length > 0) {
+        if (quote.showModelInline) {
+          const modelInline = document.createElement('span');
+          modelInline.className = 'model-inline';
+          modelInline.textContent = `(about ${quote.models.join(', ')})`;
+          attribution.appendChild(modelInline);
+        } else {
+          const modelInfo = document.createElement('div');
+          modelInfo.className = 'model-info';
+
+          // Create SVG icon
+          modelInfo.innerHTML = `
+            <svg class="model-icon" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            <span class="tooltip">About: ${quote.models.join(', ')}</span>
+          `;
+
+          attribution.appendChild(modelInfo);
+        }
+      }
+
+      quoteCard.appendChild(quoteText);
+      quoteCard.appendChild(attribution);
+      quotesGrid.appendChild(quoteCard);
+    });
   </script>
 </body>
 </html>
