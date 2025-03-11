@@ -1,14 +1,15 @@
 // FriendBench model data
 const modelData = [
   { name: "Sonnet 3.7", score: 64 },
-  { name: "Sonnet 3.6", score: 77 },
-  { name: "Sonnet 3.5", score: 75 },
-  { name: "Opus 3", score: 63 },
-  { name: "Grok 3", score: 55 },
-  { name: "GPT-4.5", score: 74 },
-  { name: "GPT-4o\n(old)", score: 37 },
-  { name: "GPT-4o\n(latest)", score: 62 },
-  { name: "o3-mini\n(high)", score: 29 }
+  { name: "Sonnet 3.6", score: 78 },
+  { name: "Sonnet 3.5", score: 72 },
+  { name: "Opus 3", score: 65 },
+  { name: "Grok 3", score: 51 },
+  { name: "GPT-4.5", score: 69 },
+  { name: "GPT-4o\n(old)", score: 34 },
+  { name: "GPT-4o\n(latest)", score: 47 },
+  { name: "o3-mini\n(high)", score: 26 },
+  { name: "R1", score: 22 }
 ];
 
 // Quotes data
