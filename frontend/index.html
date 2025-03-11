@@ -194,9 +194,9 @@
       height: 500,
       margin: {
         top: 40,
-        right: 140,
+        right: 80,
         bottom: 100,
-        left: 140
+        left: 80
       }
     };
 
@@ -233,9 +233,9 @@
       `).join('')}
 
       <!-- Y-axis label -->
-      <text x="${config.margin.left - 85}" y="${(config.height + config.margin.top - config.margin.bottom) / 2}"
+      <text x="${config.margin.left - 45}" y="${(config.height + config.margin.top - config.margin.bottom) / 2}"
             font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle"
-            fill="#666" transform="rotate(-90, ${config.margin.left - 85}, ${(config.height + config.margin.top - config.margin.bottom) / 2})">
+            fill="#666" transform="rotate(-90, ${config.margin.left - 45}, ${(config.height + config.margin.top - config.margin.bottom) / 2})">
         Friend Score
       </text>
     `;
@@ -243,7 +243,7 @@
     // Calculate bar spacing based on number of models
     const totalModels = sortedData.length;
     const availableWidth = config.width - config.margin.left - config.margin.right;
-    const barWidth = Math.min(60, (availableWidth / (totalModels + 1)) - 20);
+    const barWidth = Math.min(75, (availableWidth / (totalModels + 1)) - 15);
     const totalBarsWidth = barWidth * totalModels;
     const totalSpacingWidth = availableWidth - totalBarsWidth;
     const spacing = totalSpacingWidth / (totalModels + 1);
