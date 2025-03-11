@@ -8,7 +8,7 @@ const modelData = [
   { name: "Opus 3", score: 65 },
   { name: "Grok 3", score: 55 },
   { name: "GPT-4.5", score: 74 },
-  { name: "GPT-4o-old", score: 37 },
-  { name: "GPT-4o-latest", score: 62 },
-  { name: "o3-mini high", score: 29 }
+  { name: "GPT-4o\n(old)", score: 37 },
+  { name: "GPT-4o\n(latest)", score: 62 },
+  { name: "o3-mini\n(high)", score: 29 }
 ];

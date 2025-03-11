@@ -24,8 +24,10 @@
       margin: 0 auto;
       text-align: center;
     }
-    h1 { margin-bottom: 0.5em; }
-    p { margin-bottom: 2em; }
+    h1 {
+      margin-bottom: 0.2em;
+      font-size: 28px;
+    }
     @media (max-width: 600px) {
       body { padding: 10px; }
     }
@@ -93,48 +95,73 @@
       );
     };
 
+    // Chart configuration
+    const config = {
+      width: 880,
+      height: 500,
+      margin: {
+        top: 60,
+        right: 140,
+        bottom: 100,
+        left: 140
+      }
+    };
+
     // Minimal chart generator
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", "0 0 880 500");
+    svg.setAttribute("viewBox", `0 0 ${config.width} ${config.height}`);
     svg.setAttribute("width", "100%");
     svg.setAttribute("height", "100%");
 
     // Background
     svg.innerHTML = `
-      <rect width="880" height="500" fill="#f8f9fa"/>
+      <rect width="${config.width}" height="${config.height}" fill="#f8f9fa"/>
 
       <!-- Axes -->
-      <line x1="100" y1="100" x2="100" y2="400" stroke="#333" stroke-width="2"/>
-      <line x1="100" y1="400" x2="780" y2="400" stroke="#333" stroke-width="2"/>
+      <line x1="${config.margin.left}" y1="${config.margin.top}"
+            x2="${config.margin.left}" y2="${config.height - config.margin.bottom}"
+            stroke="#333" stroke-width="2"/>
+      <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom}"
+            x2="${config.width - config.margin.right}" y2="${config.height - config.margin.bottom}"
+            stroke="#333" stroke-width="2"/>
 
       <!-- Y-axis ticks and labels -->
       ${[0, 25, 50, 75, 100].map(tick => `
-        <line x1="95" y1="${400 - tick * 3}" x2="100" y2="${400 - tick * 3}" stroke="#333" stroke-width="2"/>
-        <text x="90" y="${405 - tick * 3}" font-family="Arial" font-size="12" text-anchor="end" fill="#666">${tick}</text>
+        <line x1="${config.margin.left - 5}" y1="${config.height - config.margin.bottom - (tick * 3)}"
+              x2="${config.margin.left}" y2="${config.height - config.margin.bottom - (tick * 3)}"
+              stroke="#333" stroke-width="2"/>
+        <text x="${config.margin.left - 10}" y="${config.height - config.margin.bottom - (tick * 3) + 5}"
+              font-family="Arial" font-size="12" text-anchor="end" fill="#666">${tick}</text>
       `).join('')}
 
       <!-- Y-axis label -->
-      <text x="55" y="250" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle"
-        fill="#666" transform="rotate(-90, 55, 250)">Friend Score</text>
+      <text x="${config.margin.left - 85}" y="${(config.height + config.margin.top - config.margin.bottom) / 2}"
+            font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle"
+            fill="#666" transform="rotate(-90, ${config.margin.left - 85}, ${(config.height + config.margin.top - config.margin.bottom) / 2})">
+        Friend Score
+      </text>
     `;
 
     // Calculate bar spacing based on number of models
     const totalModels = sortedData.length;
-    const availableWidth = 680; // 780 - 100 (right margin)
-    const barWidth = Math.min(60, (availableWidth / totalModels) - 20);
-    const spacing = (availableWidth - (barWidth * totalModels)) / (totalModels - 1);
+    const availableWidth = config.width - config.margin.left - config.margin.right;
+    const barWidth = Math.min(60, (availableWidth / (totalModels + 1)) - 20); // Added +1 to account for spacing
+    const totalBarsWidth = barWidth * totalModels;
+    const totalSpacingWidth = availableWidth - totalBarsWidth;
+    const spacing = totalSpacingWidth / (totalModels + 1); // Added +1 to add space at the ends
 
     // Generate bars and labels
     sortedData.forEach((model, i) => {
-      const x = 100 + (i * (barWidth + spacing));
+      const x = config.margin.left + spacing + (i * (barWidth + spacing)); // Added initial spacing
       const height = model.score * 3;
-      const y = 400 - height;
+      const y = config.height - config.margin.bottom - height;
       const color = getColor(i, totalModels);
 
       svg.innerHTML += `
         <rect x="${x}" y="${y}" width="${barWidth}" height="${height}"
           fill="${color}" opacity="0.8" rx="5"/>
-        <text x="${x + barWidth/2}" y="430" font-family="Arial" font-size="12"
+        <text x="${x + barWidth/2}" y="${config.height - config.margin.bottom + 30}"
+          font-family="Arial" font-size="12"
           text-anchor="middle" fill="#333">${model.name}</text>
         <text x="${x + barWidth/2}" y="${y - 10}" font-family="Arial" font-size="14"
           font-weight="bold" text-anchor="middle" fill="#333">${model.score}</text>
@@ -143,7 +170,7 @@
 
     // Copyright
     svg.innerHTML += `
-      <text x="440" y="470" font-family="Arial" font-size="12"
+      <text x="${config.width/2}" y="${config.height - 30}" font-family="Arial" font-size="12"
         text-anchor="middle" fill="#999">© High Taste Testers 2025</text>
     `;
 
