@@ -145,24 +145,30 @@
     // Calculate bar spacing based on number of models
     const totalModels = sortedData.length;
     const availableWidth = config.width - config.margin.left - config.margin.right;
-    const barWidth = Math.min(60, (availableWidth / (totalModels + 1)) - 20); // Added +1 to account for spacing
+    const barWidth = Math.min(60, (availableWidth / (totalModels + 1)) - 20);
     const totalBarsWidth = barWidth * totalModels;
     const totalSpacingWidth = availableWidth - totalBarsWidth;
-    const spacing = totalSpacingWidth / (totalModels + 1); // Added +1 to add space at the ends
+    const spacing = totalSpacingWidth / (totalModels + 1);
 
     // Generate bars and labels
     sortedData.forEach((model, i) => {
-      const x = config.margin.left + spacing + (i * (barWidth + spacing)); // Added initial spacing
+      const x = config.margin.left + spacing + (i * (barWidth + spacing));
       const height = model.score * 3;
       const y = config.height - config.margin.bottom - height;
       const color = getColor(i, totalModels);
+      const lines = model.name.split('\n');
+      const lineHeight = 14; // Height between lines
 
       svg.innerHTML += `
         <rect x="${x}" y="${y}" width="${barWidth}" height="${height}"
           fill="${color}" opacity="0.8" rx="5"/>
-        <text x="${x + barWidth/2}" y="${config.height - config.margin.bottom + 30}"
+        <text x="${x + barWidth/2}" y="${config.height - config.margin.bottom + 30 - ((lines.length - 1) * lineHeight/2)}"
           font-family="Arial" font-size="12"
-          text-anchor="middle" fill="#333">${model.name}</text>
+          text-anchor="middle" fill="#333">
+          ${lines.map((line, index) =>
+            `<tspan x="${x + barWidth/2}" dy="${index === 0 ? 0 : lineHeight}">${line}</tspan>`
+          ).join('')}
+        </text>
         <text x="${x + barWidth/2}" y="${y - 10}" font-family="Arial" font-size="14"
           font-weight="bold" text-anchor="middle" fill="#333">${model.score}</text>
       `;
