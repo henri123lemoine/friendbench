@@ -192,7 +192,7 @@
     // Chart configuration
     const config = {
       width: 880,
-      height: 400,
+      height: 500,
       margin: {
         top: 40,
         right: 80,
@@ -217,7 +217,7 @@
             text-anchor="middle" fill="#333">FriendBench™</text>
 
       <!-- Axes -->
-      <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom - 200}"
+      <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom - 300}"
             x2="${config.margin.left}" y2="${config.height - config.margin.bottom}"
             stroke="#333" stroke-width="2"/>
       <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom}"
@@ -226,17 +226,17 @@
 
       <!-- Y-axis ticks and labels -->
       ${[0, 25, 50, 75, 100].map(tick => `
-        <line x1="${config.margin.left - 5}" y1="${config.height - config.margin.bottom - (tick * 2)}"
-              x2="${config.margin.left}" y2="${config.height - config.margin.bottom - (tick * 2)}"
+        <line x1="${config.margin.left - 5}" y1="${config.height - config.margin.bottom - (tick * 3)}"
+              x2="${config.margin.left}" y2="${config.height - config.margin.bottom - (tick * 3)}"
               stroke="#333" stroke-width="2"/>
-        <text x="${config.margin.left - 10}" y="${config.height - config.margin.bottom - (tick * 2) + 5}"
+        <text x="${config.margin.left - 10}" y="${config.height - config.margin.bottom - (tick * 3) + 5}"
               font-family="Arial" font-size="12" text-anchor="end" fill="#666">${tick}</text>
       `).join('')}
 
       <!-- Y-axis label -->
-      <text x="${config.margin.left - 45}" y="${config.height - config.margin.bottom - 100}"
+      <text x="${config.margin.left - 45}" y="${config.height - config.margin.bottom - 150}"
             font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle"
-            fill="#666" transform="rotate(-90, ${config.margin.left - 45}, ${config.height - config.margin.bottom - 100})">
+            fill="#666" transform="rotate(-90, ${config.margin.left - 45}, ${config.height - config.margin.bottom - 150})">
         Friend Score
       </text>
     `;
@@ -252,7 +252,7 @@
     // Generate bars and labels
     sortedData.forEach((model, i) => {
       const x = config.margin.left + spacing + (i * (barWidth + spacing));
-      const height = model.score * 2;
+      const height = model.score * 3;
       const y = config.height - config.margin.bottom - height;
       const color = getColor(i, totalModels);
       const lines = model.name.split('\n');
