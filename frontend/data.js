@@ -6,7 +6,7 @@ const modelData = [
   { name: "Grok 3", score: 51 },
   { name: "GPT-4.5", score: 69 },
   { name: "GPT-4o\n(old)", score: 34 },
-  { name: "GPT-4o\n(latest)", score: 47 },
+  { name: "GPT-4o\n(latest)", score: 57 },
   { name: "o3-mini\n(high)", score: 26 },
   { name: "DeepSeek-R1", score: 22 },
   { name: "Gemini\n2.5 Pro", score: 57 },
