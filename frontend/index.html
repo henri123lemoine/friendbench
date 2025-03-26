@@ -1,336 +1,398 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FriendBench™</title>
-  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-  <meta name="description" content="The official friendliness benchmark for LLMs">
-  <style>
-    body {
-      margin: 0;
-      padding: 20px;
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background-color: #f8f9fa;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .container {
-      max-width: 880px;
-      width: 100%;
-      margin: 0 auto;
-    }
-    .quotes-section {
-      padding: 20px;
-    }
-    .quotes-title {
-      text-align: center;
-      font-size: 22px;
-      font-weight: bold;
-      margin-bottom: 30px;
-      color: #333;
-    }
-    .quotes-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-      gap: 30px;
-      margin-bottom: 40px;
-    }
-    .quote-card {
-      background: white;
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s ease;
-      position: relative;
-    }
-    .quote-card:hover {
-      transform: translateY(-5px);
-    }
-    .quote-text {
-      font-size: 16px;
-      margin-bottom: 16px;
-      color: #2c3e50;
-      font-style: italic;
-    }
-    .quote-attribution {
-      font-size: 14px;
-      color: #666;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .model-info {
-      display: inline-flex;
-      align-items: center;
-      cursor: help;
-      margin-left: 4px;
-    }
-    .model-icon {
-      width: 16px;
-      height: 16px;
-      fill: #1a73e8;
-      opacity: 0.7;
-      transition: opacity 0.2s ease;
-    }
-    .model-icon:hover {
-      opacity: 1;
-    }
-    .model-inline {
-      color: #1a73e8;
-      font-weight: 500;
-      margin-left: 4px;
-    }
-    .tooltip {
-      visibility: hidden;
-      position: absolute;
-      bottom: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #333;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      white-space: nowrap;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-      pointer-events: none;
-      z-index: 1000;
-    }
-    .tooltip::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      border-width: 5px;
-      border-style: solid;
-      border-color: #333 transparent transparent transparent;
-    }
-    .model-info:hover .tooltip {
-      visibility: visible;
-      opacity: 1;
-    }
-    @media (max-width: 600px) {
-      body { padding: 10px; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FriendBench™</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <meta
+      name="description"
+      content="The official friendliness benchmark for LLMs"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 880px;
+        width: 100%;
+        margin: 0 auto;
+      }
+      .quotes-section {
+        padding: 20px;
+      }
+      .quotes-title {
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+        margin-bottom: 30px;
+        color: #333;
+      }
       .quotes-grid {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
       }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div id="chart-container"></div>
-    <div class="quotes-section">
-      <h2 class="quotes-title">Some thoughts from our High Taste Testers™</h2>
-      <div id="quotes-grid" class="quotes-grid"></div>
+      .quote-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+        position: relative;
+      }
+      .quote-card:hover {
+        transform: translateY(-5px);
+      }
+      .quote-text {
+        font-size: 16px;
+        margin-bottom: 16px;
+        color: #2c3e50;
+        font-style: italic;
+      }
+      .quote-attribution {
+        font-size: 14px;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .model-info {
+        display: inline-flex;
+        align-items: center;
+        cursor: help;
+        margin-left: 4px;
+      }
+      .model-icon {
+        width: 16px;
+        height: 16px;
+        fill: #1a73e8;
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+      }
+      .model-icon:hover {
+        opacity: 1;
+      }
+      .model-inline {
+        color: #1a73e8;
+        font-weight: 500;
+        margin-left: 4px;
+      }
+      .tooltip {
+        visibility: hidden;
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
+        z-index: 1000;
+      }
+      .tooltip::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 5px;
+        border-style: solid;
+        border-color: #333 transparent transparent transparent;
+      }
+      .model-info:hover .tooltip {
+        visibility: visible;
+        opacity: 1;
+      }
+      @media (max-width: 600px) {
+        body {
+          padding: 10px;
+        }
+        .quotes-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div id="chart-container"></div>
+      <div class="quotes-section">
+        <h2 class="quotes-title">Some thoughts from our High Taste Testers™</h2>
+        <div id="quotes-grid" class="quotes-grid"></div>
+      </div>
     </div>
-  </div>
 
-  <script src="data.js"></script>
-  <script>
-    // Sort models by score in descending order
-    const sortedData = [...modelData].sort((a, b) => b.score - a.score);
+    <script src="data.js"></script>
+    <script>
+      // Sort models by score in descending order
+      const sortedData = [...modelData].sort((a, b) => b.score - a.score);
 
-    // Color interpolation helper functions
-    const hexToRgb = hex => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-      } : null;
-    };
-
-    const rgbToHex = ({r, g, b}) =>
-      '#' + [r, g, b].map(x => Math.round(x).toString(16).padStart(2, '0')).join('');
-
-    const interpolateColor = (color1, color2, factor) => {
-      const c1 = hexToRgb(color1);
-      const c2 = hexToRgb(color2);
-      return {
-        r: c1.r + (c2.r - c1.r) * factor,
-        g: c1.g + (c2.g - c1.g) * factor,
-        b: c1.b + (c2.b - c1.b) * factor
+      // Color interpolation helper functions
+      const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result
+          ? {
+              r: parseInt(result[1], 16),
+              g: parseInt(result[2], 16),
+              b: parseInt(result[3], 16),
+            }
+          : null;
       };
-    };
 
-    // Generate colors for any number of points
-    const getColor = (index, total) => {
-      // Define base colors for gradient
-      const baseColors = ['#9370DB', '#1E90FF', '#3CB371'];
+      const rgbToHex = ({ r, g, b }) =>
+        "#" +
+        [r, g, b]
+          .map((x) => Math.round(x).toString(16).padStart(2, "0"))
+          .join("");
 
-      if (total === 1) return baseColors[0];
+      const interpolateColor = (color1, color2, factor) => {
+        const c1 = hexToRgb(color1);
+        const c2 = hexToRgb(color2);
+        return {
+          r: c1.r + (c2.r - c1.r) * factor,
+          g: c1.g + (c2.g - c1.g) * factor,
+          b: c1.b + (c2.b - c1.b) * factor,
+        };
+      };
 
-      // Calculate which segment of the gradient we're in
-      const segments = baseColors.length - 1;
-      const segment = (index / (total - 1)) * segments;
-      const segmentIndex = Math.floor(segment);
-      const segmentFactor = segment - segmentIndex;
+      // Generate colors for any number of points
+      const getColor = (index, total) => {
+        // Define base colors for gradient
+        const baseColors = ["#9370DB", "#1E90FF", "#3CB371"];
 
-      // If we're exactly on a base color, return it
-      if (segmentFactor === 0 && baseColors[segmentIndex]) {
-        return baseColors[segmentIndex];
-      }
+        if (total === 1) return baseColors[0];
 
-      // Otherwise interpolate between the two nearest base colors
-      return rgbToHex(
-        interpolateColor(
-          baseColors[segmentIndex],
-          baseColors[segmentIndex + 1],
-          segmentFactor
-        )
-      );
-    };
+        // Calculate which segment of the gradient we're in
+        const segments = baseColors.length - 1;
+        const segment = (index / (total - 1)) * segments;
+        const segmentIndex = Math.floor(segment);
+        const segmentFactor = segment - segmentIndex;
 
-    // Chart configuration
-    const config = {
-      width: 880,
-      height: 500,
-      margin: {
-        top: 40,
-        right: 80,
-        bottom: 100,
-        left: 80
-      }
-    };
+        // If we're exactly on a base color, return it
+        if (segmentFactor === 0 && baseColors[segmentIndex]) {
+          return baseColors[segmentIndex];
+        }
 
-    // Minimal chart generator
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", `0 0 ${config.width} ${config.height}`);
-    svg.setAttribute("width", "100%");
-    svg.setAttribute("height", "100%");
+        // Otherwise interpolate between the two nearest base colors
+        return rgbToHex(
+          interpolateColor(
+            baseColors[segmentIndex],
+            baseColors[segmentIndex + 1],
+            segmentFactor
+          )
+        );
+      };
 
-    // Background
-    svg.innerHTML = `
+      // Chart configuration
+      const config = {
+        width: 880,
+        height: 500,
+        margin: {
+          top: 40,
+          right: 80,
+          bottom: 100,
+          left: 80,
+        },
+      };
+
+      // Minimal chart generator
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", `0 0 ${config.width} ${config.height}`);
+      svg.setAttribute("width", "100%");
+      svg.setAttribute("height", "100%");
+
+      // Background
+      svg.innerHTML = `
       <rect width="${config.width}" height="${config.height}" fill="#f8f9fa"/>
 
       <!-- Title -->
-      <text x="${config.width/2}" y="${config.margin.top - 10}"
+      <text x="${config.width / 2}" y="${config.margin.top - 10}"
             font-family="Arial" font-size="32" font-weight="bold"
             text-anchor="middle" fill="#333">FriendBench™</text>
 
       <!-- Axes -->
-      <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom - 300}"
-            x2="${config.margin.left}" y2="${config.height - config.margin.bottom}"
+      <line x1="${config.margin.left}" y1="${
+        config.height - config.margin.bottom - 300
+      }"
+            x2="${config.margin.left}" y2="${
+        config.height - config.margin.bottom
+      }"
             stroke="#333" stroke-width="2"/>
-      <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom}"
-            x2="${config.width - config.margin.right}" y2="${config.height - config.margin.bottom}"
+      <line x1="${config.margin.left}" y1="${
+        config.height - config.margin.bottom
+      }"
+            x2="${config.width - config.margin.right}" y2="${
+        config.height - config.margin.bottom
+      }"
             stroke="#333" stroke-width="2"/>
 
       <!-- Y-axis ticks and labels -->
-      ${[0, 25, 50, 75, 100].map(tick => `
-        <line x1="${config.margin.left - 5}" y1="${config.height - config.margin.bottom - (tick * 3)}"
-              x2="${config.margin.left}" y2="${config.height - config.margin.bottom - (tick * 3)}"
+      ${[0, 25, 50, 75, 100]
+        .map(
+          (tick) => `
+        <line x1="${config.margin.left - 5}" y1="${
+            config.height - config.margin.bottom - tick * 3
+          }"
+              x2="${config.margin.left}" y2="${
+            config.height - config.margin.bottom - tick * 3
+          }"
               stroke="#333" stroke-width="2"/>
-        <text x="${config.margin.left - 10}" y="${config.height - config.margin.bottom - (tick * 3) + 5}"
+        <text x="${config.margin.left - 10}" y="${
+            config.height - config.margin.bottom - tick * 3 + 5
+          }"
               font-family="Arial" font-size="12" text-anchor="end" fill="#666">${tick}</text>
-      `).join('')}
+      `
+        )
+        .join("")}
 
       <!-- Y-axis label -->
-      <text x="${config.margin.left - 45}" y="${config.height - config.margin.bottom - 150}"
+      <text x="${config.margin.left - 45}" y="${
+        config.height - config.margin.bottom - 150
+      }"
             font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle"
-            fill="#666" transform="rotate(-90, ${config.margin.left - 45}, ${config.height - config.margin.bottom - 150})">
+            fill="#666" transform="rotate(-90, ${config.margin.left - 45}, ${
+        config.height - config.margin.bottom - 150
+      })">
         Friend Score
       </text>
     `;
 
-    // Calculate bar spacing based on number of models
-    const totalModels = sortedData.length;
-    const availableWidth = config.width - config.margin.left - config.margin.right;
-    const barWidth = Math.min(75, (availableWidth / (totalModels + 1)) - 15);
-    const totalBarsWidth = barWidth * totalModels;
-    const totalSpacingWidth = availableWidth - totalBarsWidth;
-    const spacing = totalSpacingWidth / (totalModels + 1);
+      // Calculate bar spacing based on number of models
+      const totalModels = sortedData.length;
+      const availableWidth =
+        config.width - config.margin.left - config.margin.right;
+      const barWidth = Math.min(75, availableWidth / (totalModels + 1) - 15);
+      const totalBarsWidth = barWidth * totalModels;
+      const totalSpacingWidth = availableWidth - totalBarsWidth;
+      const spacing = totalSpacingWidth / (totalModels + 1);
 
-    // Generate bars and labels
-    sortedData.forEach((model, i) => {
-      const x = config.margin.left + spacing + (i * (barWidth + spacing));
-      const height = model.score * 3;
-      const y = config.height - config.margin.bottom - height;
-      const color = getColor(i, totalModels);
-      const lines = model.name.split('\n');
-      const lineHeight = 14;
+      // Generate bars and labels
+      sortedData.forEach((model, i) => {
+        const x = config.margin.left + spacing + i * (barWidth + spacing);
+        const height = model.score * 3;
+        const y = config.height - config.margin.bottom - height;
+        const color = getColor(i, totalModels);
+        const lines = model.name.split("\n");
+        const lineHeight = 14;
 
-      svg.innerHTML += `
+        svg.innerHTML += `
         <rect x="${x}" y="${y}" width="${barWidth}" height="${height}"
           fill="${color}" opacity="0.8" rx="5"/>
-        <text x="${x + barWidth/2}" y="${config.height - config.margin.bottom + 30 - ((lines.length - 1) * lineHeight/2)}"
+        <text x="${x + barWidth / 2}" y="${
+          config.height -
+          config.margin.bottom +
+          30 -
+          ((lines.length - 1) * lineHeight) / 2
+        }"
           font-family="Arial" font-size="12"
           text-anchor="middle" fill="#333">
-          ${lines.map((line, index) =>
-            `<tspan x="${x + barWidth/2}" dy="${index === 0 ? 0 : lineHeight}">${line}</tspan>`
-          ).join('')}
+          ${lines
+            .map(
+              (line, index) =>
+                `<tspan x="${x + barWidth / 2}" dy="${
+                  index === 0 ? 0 : lineHeight
+                }">${line}</tspan>`
+            )
+            .join("")}
         </text>
       `;
-    });
+      });
 
-    // Copyright
-    svg.innerHTML += `
-      <text x="${config.width/2}" y="${config.height - 30}" font-family="Arial" font-size="12"
+      // Copyright
+      svg.innerHTML += `
+      <text x="${config.width / 2}" y="${
+        config.height - 30
+      }" font-family="Arial" font-size="12"
         text-anchor="middle" fill="#999">© High Taste Testers 2025</text>
     `;
 
-    document.getElementById('chart-container').appendChild(svg);
+      document.getElementById("chart-container").appendChild(svg);
 
-    // Populate quotes grid
-    const quotesGrid = document.getElementById('quotes-grid');
-    quotesData.forEach(quote => {
-      const quoteCard = document.createElement('div');
-      quoteCard.className = 'quote-card';
+      // Populate quotes grid
+      const quotesGrid = document.getElementById("quotes-grid");
+      quotesData.forEach((quote) => {
+        const quoteCard = document.createElement("div");
+        quoteCard.className = "quote-card";
 
-      const quoteText = document.createElement('div');
-      quoteText.className = 'quote-text';
-      quoteText.textContent = `"${quote.text}"`;
+        const quoteText = document.createElement("div");
+        quoteText.className = "quote-text";
+        quoteText.textContent = `"${quote.text}"`;
 
-      const attribution = document.createElement('div');
-      attribution.className = 'quote-attribution';
-      attribution.textContent = `— ${quote.author}`;
+        const attribution = document.createElement("div");
+        attribution.className = "quote-attribution";
+        attribution.textContent = `— ${quote.author}`;
 
-      // Add model reference (either inline or as icon)
-      if (quote.models && quote.models.length > 0) {
-        if (quote.showModelInline) {
-          const modelInline = document.createElement('span');
-          modelInline.className = 'model-inline';
-          modelInline.textContent = `(about ${quote.models.join(', ')})`;
-          attribution.appendChild(modelInline);
-        } else {
-          const modelInfo = document.createElement('div');
-          modelInfo.className = 'model-info';
+        // Add model reference (either inline or as icon)
+        if (quote.models && quote.models.length > 0) {
+          if (quote.showModelInline) {
+            const modelInline = document.createElement("span");
+            modelInline.className = "model-inline";
+            modelInline.textContent = `(about ${quote.models.join(", ")})`;
+            attribution.appendChild(modelInline);
+          } else {
+            const modelInfo = document.createElement("div");
+            modelInfo.className = "model-info";
 
-          // Create SVG icon
-          modelInfo.innerHTML = `
+            // Create SVG icon
+            modelInfo.innerHTML = `
             <svg class="model-icon" viewBox="0 0 24 24">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
             </svg>
-            <span class="tooltip">About: ${quote.models.join(', ')}</span>
+            <span class="tooltip">About: ${quote.models.join(", ")}</span>
           `;
 
-          attribution.appendChild(modelInfo);
+            attribution.appendChild(modelInfo);
+          }
         }
-      }
 
-      quoteCard.appendChild(quoteText);
-      quoteCard.appendChild(attribution);
-      quotesGrid.appendChild(quoteCard);
-    });
-  </script>
+        quoteCard.appendChild(quoteText);
+        quoteCard.appendChild(attribution);
+        quotesGrid.appendChild(quoteCard);
+      });
+    </script>
 
-  <footer style="text-align: center; margin-top: 40px; padding-bottom: 20px; width: 100%;">
-    <p style="color: #666; font-size: 14px;">
-      <a href="https://forms.gle/neHXHQefimeoVwuG7" style="color: #1a73e8; text-decoration: none; font-weight: 500; transition: opacity 0.2s ease;" target="_blank" rel="noopener noreferrer">
-        Apply to become a High Taste Tester™
-      </a>
-    </p>
-    <p style="color: #999; font-size: 12px; margin-top: 10px;">
-      © High Taste Testers 2025
-    </p>
-  </footer>
-</body>
+    <footer
+      style="
+        text-align: center;
+        margin-top: 40px;
+        padding-bottom: 20px;
+        width: 100%;
+      "
+    >
+      <p style="color: #666; font-size: 14px">
+        <a
+          href="https://forms.gle/neHXHQefimeoVwuG7"
+          style="
+            color: #1a73e8;
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.2s ease;
+          "
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Apply to become a High Taste Tester™
+        </a>
+      </p>
+      <p style="color: #999; font-size: 12px; margin-top: 10px">
+        © High Taste Testers 2025
+      </p>
+    </footer>
+  </body>
 </html>
