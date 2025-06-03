@@ -138,8 +138,10 @@
       </div>
     </div>
 
-    <script src="data.js"></script>
-    <script>
+    <script type="module">
+      const response = await fetch('/.netlify/functions/get-data' + window.location.search);
+      const { models: modelData, quotes: quotesData } = await response.json();
+
       // Sort models by score in descending order
       const sortedData = [...modelData].sort((a, b) => b.score - a.score);
 
