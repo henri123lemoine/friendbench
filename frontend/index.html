@@ -138,10 +138,19 @@
       </div>
     </div>
 
-    <script src="data.js"></script>
-    <script>
+    <script type="module">
+      const response = await fetch('/.netlify/functions/get-data');
+      const { models: modelData, quotes: quotesData } = await response.json();
+
+      // Filter by models query parameter if provided
+      const params = new URLSearchParams(window.location.search);
+      const selected = params.get('models');
+      const filteredModels = selected
+        ? modelData.filter(m => selected.split(',').map(s => s.trim()).includes(m.name))
+        : modelData;
+
       // Sort models by score in descending order
-      const sortedData = [...modelData].sort((a, b) => b.score - a.score);
+      const sortedData = [...filteredModels].sort((a, b) => b.score - a.score);
 
       // Color interpolation helper functions
       const hexToRgb = (hex) => {
