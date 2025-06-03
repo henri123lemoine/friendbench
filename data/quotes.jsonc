@@ -1,3 +1,4 @@
+// High Taste Tester quotes
 [
   {
     "text": "If Claude was a human it would be the best human",
@@ -32,3 +33,4 @@
     "models": ["Sonnet 3.7"]
   }
 ]
+// end of quotes

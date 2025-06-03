@@ -1,3 +1,4 @@
+// FriendBench model scores (higher is friendlier)
 [
   { "name": "Sonnet 4", "score": 78 },
   { "name": "Opus 4", "score": 80 },
@@ -12,3 +13,4 @@
   { "name": "DeepSeek-R1", "score": 22 },
   { "name": "Gemini\n2.5 Pro", "score": 57 }
 ]
+// end of models
