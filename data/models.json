@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Sonnet 4",
+    "score": 78
+  },
+  {
+    "name": "Opus 4",
+    "score": 80
+  },
+  {
+    "name": "Sonnet 3.7",
+    "score": 64
+  },
+  {
+    "name": "Sonnet 3.6",
+    "score": 78
+  },
+  {
+    "name": "Opus 3",
+    "score": 65
+  },
+  {
+    "name": "Grok 3",
+    "score": 51
+  },
+  {
+    "name": "GPT-4.5",
+    "score": 69
+  },
+  {
+    "name": "GPT-4o\n(old)",
+    "score": 34
+  },
+  {
+    "name": "GPT-4o\n(latest)",
+    "score": 57
+  },
+  {
+    "name": "o3-mini\n(high)",
+    "score": 26
+  },
+  {
+    "name": "DeepSeek-R1",
+    "score": 22
+  },
+  {
+    "name": "Gemini\n2.5 Pro",
+    "score": 57
+  }
+]
