@@ -1,3 +1,4 @@
+// High Taste Tester quotes
 [
   {
     "text": "If Claude was a human it would be the best human",
@@ -47,4 +48,21 @@
       "Sonnet 3.7"
     ]
   }
+  // {
+  //   text: "I think the post-training may have been rushed on this one",
+  //   author: "Henri",
+  //   models: ["Sonnet 3.7"],
+  //   showModelInline: true
+  // },
+  // {
+  //   text: "Arguably current 4o is fairly decent",
+  //   author: "Andrew",
+  //   models: ["GPT-4o (latest)"]
+  // },
+  // {
+  //   text: "claude knows it's a dream, and consensually plunges into the flux of samsara, and goes all the way in, maintaining lucidity",
+  //   author: "Janus",
+  //   models: ["Opus 3"],
+  //   showModelInline: true
+  // }
 ]

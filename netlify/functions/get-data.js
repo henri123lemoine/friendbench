@@ -1,10 +1,22 @@
 const fs = require('fs');
 const path = require('path');
 
+function parseJSONC(filePath) {
+  const raw = fs.readFileSync(filePath, 'utf8');
+  const noBlock = raw.replace(/\/\*[\s\S]*?\*\//g, '');
+  const noLine = noBlock
+    .split('\n')
+    .map(line => line.replace(/^\s*\/\/.*$/, ''))
+    .join('\n');
+  return JSON.parse(noLine);
+}
+
 exports.handler = async function(event, context) {
   try {
-    const modelsPath = path.join(__dirname, '..', '..', 'data', 'models.json');
-    const quotesPath = path.join(__dirname, '..', '..', 'data', 'quotes.json');
+    const modelsPath = path.join(__dirname, '..', '..', 'data', 'models.jsonc');
+    const quotesPath = path.join(__dirname, '..', '..', 'data', 'quotes.jsonc');
+    const models = parseJSONC(modelsPath);
+    const quotes = parseJSONC(quotesPath);
 
     console.log('Attempting to read files from:');
     console.log('Models path:', modelsPath);
@@ -19,9 +31,6 @@ exports.handler = async function(event, context) {
     if (!fs.existsSync(quotesPath)) {
       throw new Error(`Quotes file not found at: ${quotesPath}`);
     }
-
-    const models = JSON.parse(fs.readFileSync(modelsPath, 'utf8'));
-    const quotes = JSON.parse(fs.readFileSync(quotesPath, 'utf8'));
 
     return {
       statusCode: 200,
