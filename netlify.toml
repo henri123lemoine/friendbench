@@ -2,6 +2,11 @@
 publish = "frontend"
 functions = "netlify/functions"
 
+[functions]
+# Include the `data` directory in the deployed function bundle so the
+# `get-data` function can read the JSONC files at runtime.
+included_files = ["data/**"]
+
 [[redirects]]
 from = "/*"
 to = "/index.html"
