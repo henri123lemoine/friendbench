@@ -1,7 +1,7 @@
 // FriendBench model scores (higher is friendlier)
 [
   {
-    "name": "Sonnet 4",
+    "name": "Sonnet\n4",
     "score": 78
   },
   {
@@ -9,11 +9,11 @@
     "score": 80
   },
   {
-    "name": "Sonnet 3.7",
+    "name": "Sonnet\n3.7",
     "score": 64
   },
   {
-    "name": "Sonnet 3.6",
+    "name": "Sonnet\n3.6",
     "score": 78
   },
   {
@@ -21,17 +21,17 @@
     "score": 65
   },
   {
-    "name": "Grok 3",
+    "name": "Grok\n3",
     "score": 51
   },
   {
     "name": "GPT-4.5",
     "score": 69
   },
-  {
-    "name": "GPT-4o\n(old)",
-    "score": 34
-  },
+  // {
+  //   "name": "GPT-4o\n(old)",
+  //   "score": 34
+  // },
   {
     "name": "GPT-4o\n(latest)",
     "score": 57
@@ -44,17 +44,17 @@
     "name": "o4-mini\n(high)",
     "score": 51
   },
-  {
-    "name": "o3",
-    "score": 43
-  },
   // {
-  //   "name": "DeepSeek\nR1",
-  //   "score": 22
+  //   "name": "o3",
+  //   "score": 43
   // },
   {
+    "name": "DeepSeek\nR1",
+    "score": 22
+  },
+  {
     "name": "DeepSeek\nR1 (new)",
-    "score": 38
+    "score": 40
   },
   {
     "name": "Gemini\n2.5 Pro",
