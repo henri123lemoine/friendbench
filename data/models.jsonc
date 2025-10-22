@@ -1,16 +1,19 @@
-// FriendBench model scores (higher is friendlier)
 [
   {
-    "name": "Sonnet\n4",
-    "score": 78
+    "name": "Sonnet\n4.5",
+    "score": 84
   },
   {
-    "name": "Opus 4",
-    "score": 80
+    "name": "Sonnet\n4",
+    "score": 76
+  },
+  {
+    "name": "Opus 4\n& 4.1",
+    "score": 81
   },
   {
     "name": "Sonnet\n3.7",
-    "score": 64
+    "score": 59
   },
   {
     "name": "Sonnet\n3.6",
@@ -21,44 +24,56 @@
     "score": 65
   },
   {
+    "name": "Grok\n4",
+    "score": 54
+  },
+  {
     "name": "Grok\n3",
-    "score": 51
+    "score": 46
+  },
+  {
+    "name": "GPT-5\n(thinking)",
+    "score": 58
   },
   {
     "name": "GPT-4.5",
-    "score": 69
+    "score": 63
   },
-  // {
-  //   "name": "GPT-4o\n(old)",
-  //   "score": 34
-  // },
   {
-    "name": "GPT-4o\n(latest)",
-    "score": 57
+    "name": "GPT-4o\n(old)",
+    "score": 34,
+    "hidden": true
+  },
+  {
+    "name": "GPT-4o",
+    "score": 50
   },
   {
     "name": "o3-mini\n(high)",
-    "score": 26
+    "score": 26,
+    "hidden": true
   },
   {
     "name": "o4-mini\n(high)",
-    "score": 51
+    "score": 51,
+    "hidden": true
   },
-  // {
-  //   "name": "o3",
-  //   "score": 43
-  // },
   {
-    "name": "DeepSeek\nR1",
+    "name": "o3",
+    "score": 43,
+    "hidden": true
+  },
+  {
+    "name": "R1",
     "score": 22
   },
   {
-    "name": "DeepSeek\nR1 (new)",
+    "name": "R1 (new)",
     "score": 40
   },
   {
     "name": "Gemini\n2.5 Pro",
-    "score": 57
+    "score": 53
   }
 ]
 /*

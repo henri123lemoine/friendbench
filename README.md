@@ -28,4 +28,4 @@ This will start a local server (typically at `http://localhost:8888`) that serve
 
 ## License
 
-© High Taste Testers 2025
+High Taste Testers 2025™

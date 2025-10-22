@@ -14,14 +14,16 @@
     "models": [
       "Grok 3",
       "GPT-4.5"
-    ]
+    ],
+    "showModelInline": true
   },
   {
     "text": "4.5 is very very friend",
     "author": "[redacted]",
     "models": [
       "GPT-4.5"
-    ]
+    ],
+    "showModelInline": true
   },
   {
     "text": "yeah xai cooked on this one",
@@ -47,22 +49,21 @@
     "models": [
       "Sonnet 3.7"
     ]
+  },
+  {
+    "text": "I think the post-training may have been rushed on this one",
+    "author": "Henri",
+    "models": ["Sonnet 3.7"],
+    "showModelInline": true
+  },
+  {
+    "text": "GPT-4o Is An Absurd Sycophant",
+    "author": "Zvi",
+    "models": ["GPT-4o"]
   }
-  // {
-  //   text: "I think the post-training may have been rushed on this one",
-  //   author: "Henri",
-  //   models: ["Sonnet 3.7"],
-  //   showModelInline: true
-  // },
   // {
   //   text: "Arguably current 4o is fairly decent",
   //   author: "Andrew",
   //   models: ["GPT-4o (latest)"]
   // },
-  // {
-  //   text: "claude knows it's a dream, and consensually plunges into the flux of samsara, and goes all the way in, maintaining lucidity",
-  //   author: "Janus",
-  //   models: ["Opus 3"],
-  //   showModelInline: true
-  // }
 ]
