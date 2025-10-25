@@ -1,23 +1,23 @@
 [
   {
     "name": "Sonnet\n4.5",
-    "score": 84
+    "score": 79
   },
   {
     "name": "Sonnet\n4",
-    "score": 76
+    "score": 71
   },
   {
     "name": "Opus 4\n& 4.1",
-    "score": 81
+    "score": 76
   },
   {
     "name": "Sonnet\n3.7",
-    "score": 59
+    "score": 45
   },
   {
     "name": "Sonnet\n3.6",
-    "score": 78
+    "score": 73
   },
   {
     "name": "Opus 3",
@@ -25,15 +25,15 @@
   },
   {
     "name": "Grok\n4",
-    "score": 54
+    "score": 39
   },
   {
     "name": "Grok\n3",
-    "score": 46
+    "score": 29
   },
   {
     "name": "GPT-5\n(thinking)",
-    "score": 58
+    "score": 47
   },
   {
     "name": "GPT-4.5",
@@ -60,20 +60,21 @@
   },
   {
     "name": "o3",
-    "score": 43,
-    "hidden": true
+    "score": 37,
+    "hidden": false
   },
   {
     "name": "R1",
-    "score": 22
+    "score": 12
   },
   {
     "name": "R1 (new)",
-    "score": 40
+    "score": 30,
+    "hidden": true
   },
   {
     "name": "Gemini\n2.5 Pro",
-    "score": 53
+    "score": 57
   }
 ]
 /*
