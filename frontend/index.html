@@ -384,7 +384,12 @@
 
       const attribution = document.createElement("div");
       attribution.className = "quote-attribution";
-      attribution.textContent = `— ${quote.author}`;
+
+      // Wrap author in link if URL is provided
+      const authorText = quote.url
+        ? `<a href="${quote.url}" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; text-decoration: underline; text-decoration-style: dotted;">${quote.author}</a>`
+        : quote.author;
+      attribution.innerHTML = `— ${authorText}`;
 
       // Add model reference (either inline or as icon)
       if (quote.models && quote.models.length > 0) {
