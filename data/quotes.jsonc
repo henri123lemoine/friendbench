@@ -82,6 +82,13 @@
   {
     "text": "I have no need of a friend who changes when I change and nods when I nod; my shadow does that much better.",
     "author": "Plutarch, in <em>How to Tell a Flatterer from a Friend</em>"
+  },
+  {
+    "text": "It is a vast intelligence with no spine. It has a willingness to glaze or reverse itself.",
+    "author": "Zvi",
+    "models": ["Gemini 3 Pro"],
+    "url": "https://thezvi.substack.com/p/gemini-3-pro-is-a-vast-intelligence",
+    "showModelInline": true
   }
   // {
   //   text: "Arguably current 4o is fairly decent",
