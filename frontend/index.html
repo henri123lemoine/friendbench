@@ -256,9 +256,10 @@
     // Chart configuration
     const container = document.getElementById("chart-container");
     const containerWidth = container.offsetWidth;
+    const isMobile = containerWidth < 600;
     const config = {
       width: Math.max(containerWidth, 800),
-      height: 1000,
+      height: isMobile ? 600 : 1000,
       margin: {
         top: 40,
         right: 80,
@@ -273,6 +274,9 @@
     svg.setAttribute("width", "100%");
     svg.setAttribute("height", "100%");
 
+    // Calculate chart area height
+    const chartHeight = config.height - config.margin.top - config.margin.bottom;
+
     // Background
     svg.innerHTML = `
       <rect width="${config.width}" height="${config.height}" fill="#f8f9fa"/>
@@ -283,7 +287,7 @@
             text-anchor="middle" fill="#333">FriendBench™</text>
 
       <!-- Axes -->
-      <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom - 700
+      <line x1="${config.margin.left}" y1="${config.margin.top
       }"
             x2="${config.margin.left}" y2="${config.height - config.margin.bottom
       }"
@@ -298,12 +302,12 @@
       ${[0, 25, 50, 75, 100]
         .map(
           (tick) => `
-        <line x1="${config.margin.left - 5}" y1="${config.height - config.margin.bottom - tick * 7
+        <line x1="${config.margin.left - 5}" y1="${config.height - config.margin.bottom - (tick / 100) * chartHeight
             }"
-              x2="${config.margin.left}" y2="${config.height - config.margin.bottom - tick * 7
+              x2="${config.margin.left}" y2="${config.height - config.margin.bottom - (tick / 100) * chartHeight
             }"
               stroke="#333" stroke-width="2"/>
-        <text x="${config.margin.left - 10}" y="${config.height - config.margin.bottom - tick * 7 + 5
+        <text x="${config.margin.left - 10}" y="${config.height - config.margin.bottom - (tick / 100) * chartHeight + 5
             }"
               font-family="Arial" font-size="12" text-anchor="end" fill="#666">${tick}</text>
       `
@@ -311,10 +315,10 @@
         .join("")}
 
       <!-- Y-axis label -->
-      <text x="${config.margin.left - 45}" y="${config.height - config.margin.bottom - 350
+      <text x="${config.margin.left - 45}" y="${config.margin.top + chartHeight / 2
       }"
             font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle"
-            fill="#666" transform="rotate(-90, ${config.margin.left - 45}, ${config.height - config.margin.bottom - 350
+            fill="#666" transform="rotate(-90, ${config.margin.left - 45}, ${config.margin.top + chartHeight / 2
       })">
         Friend Score
       </text>
@@ -332,7 +336,7 @@
     // Generate bars and labels
     sortedData.forEach((model, i) => {
       const x = config.margin.left + spacing + i * (barWidth + spacing);
-      const height = model.score * 7;
+      const height = (model.score / 100) * chartHeight;
       const y = config.height - config.margin.bottom - height;
       const color = getColor(i, totalModels);
       const lines = model.name.split("\n");
@@ -376,7 +380,7 @@
 
       const quoteText = document.createElement("div");
       quoteText.className = "quote-text";
-      quoteText.textContent = `"${quote.text}"`;
+      quoteText.innerHTML = `"${quote.text}"`;
 
       const attribution = document.createElement("div");
       attribution.className = "quote-attribution";
