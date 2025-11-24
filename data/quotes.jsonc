@@ -59,7 +59,7 @@
   {
     "text": "GPT-4o Is An Absurd Sycophant",
     "author": "Zvi",
-    "models": ["GPT-4o"],
+    "models": ["GPT-4o (latest)"],
     "url": "https://thezvi.substack.com/p/gpt-4o-is-an-absurd-sycophant"
   },
   {
@@ -75,7 +75,7 @@
   {
     "text": "hey let's do evil viziers whispering poisonous flattery [—AI companies]",
     "author": "Eliezer",
-    "models": ["GPT-4o"],
+    "models": ["GPT-4o (latest)"],
     "url": "https://x.com/allTheYud/status/1971669993566920851",
     "showModelInline": true
   },
@@ -89,10 +89,11 @@
     "models": ["Gemini 3 Pro"],
     "url": "https://thezvi.substack.com/p/gemini-3-pro-is-a-vast-intelligence",
     "showModelInline": true
+  },
+  {
+    "text": "Claude Opus 4.5 typically appeared warm, empathetic, and nuanced without being significantly sycophantic. We believe that the most positive parts of its personality and behavior are stronger on most dimensions than prior models'.",
+    "author": "Anthropic",
+    "models": ["Opus 4.5"],
+    "url": "https://assets.anthropic.com/m/64823ba7485345a7/Claude-Opus-4-5-System-Card.pdf"
   }
-  // {
-  //   text: "Arguably current 4o is fairly decent",
-  //   author: "Andrew",
-  //   models: ["GPT-4o (latest)"]
-  // },
 ]
