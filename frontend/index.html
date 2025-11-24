@@ -256,10 +256,10 @@
     // Chart configuration
     const container = document.getElementById("chart-container");
     const containerWidth = container.offsetWidth;
-    const isMobile = containerWidth < 600;
+    const chartWidth = Math.max(containerWidth, 800);
     const config = {
-      width: Math.max(containerWidth, 800),
-      height: isMobile ? 600 : 1000,
+      width: chartWidth,
+      height: chartWidth / 1.7, // Maintain 1.7:1 aspect ratio
       margin: {
         top: 40,
         right: 80,
