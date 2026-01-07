@@ -95,5 +95,10 @@
     "author": "Anthropic",
     "models": ["Opus 4.5"],
     "url": "https://assets.anthropic.com/m/64823ba7485345a7/Claude-Opus-4-5-System-Card.pdf"
+  },
+  {
+    "text": "Friend test passed. Congrats.",
+    "author": "ThePrimeagen",
+    "models": ["Opus 4.5"]
   }
 ]
