@@ -13,15 +13,15 @@
   },
   {
     "name": "Sonnet\n4",
-    "score": 71
+    "score": 68
   },
   {
     "name": "Opus\n4&4.1",
-    "score": 75
+    "score": 72
   },
   {
     "name": "Sonnet\n3.7",
-    "score": 45
+    "score": 43
   },
   {
     "name": "Sonnet\n3.6",
@@ -29,7 +29,7 @@
   },
   {
     "name": "Opus\n3",
-    "score": 65
+    "score": 68
   },
   {
     "name": "Grok\n4",
@@ -40,7 +40,7 @@
     "score": 29
   },
   {
-    "name": "GPT-5\n(thinking)",
+    "name": "GPT\n5",
     "score": 47
   },
   {
@@ -72,7 +72,7 @@
   },
   {
     "name": "o3",
-    "score": 37,
+    "score": 41,
     "hidden": false
   },
   {
