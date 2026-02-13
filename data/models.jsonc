@@ -16,7 +16,7 @@
     "score": 71
   },
   {
-    "name": "Opus 4\n& 4.1",
+    "name": "Opus\n4&4.1",
     "score": 75
   },
   {
@@ -28,7 +28,7 @@
     "score": 72
   },
   {
-    "name": "Opus 3",
+    "name": "Opus\n3",
     "score": 65
   },
   {
@@ -44,20 +44,20 @@
     "score": 47
   },
   {
-    "name": "GPT-5.1",
+    "name": "GPT\n5.1",
     "score": 64
   },
   {
-    "name": "GPT-4.5",
+    "name": "GPT\n4.5",
     "score": 63
   },
   {
-    "name": "GPT-4o\n(old)",
+    "name": "GPT\n4o (old)",
     "score": 34,
     "hidden": true
   },
   {
-    "name": "GPT-4o",
+    "name": "GPT\n4o",
     "score": 50
   },
   {
@@ -80,7 +80,7 @@
     "score": 12
   },
   {
-    "name": "R1 (new)",
+    "name": "R1\n(new)",
     "score": 30,
     "hidden": true
   },
