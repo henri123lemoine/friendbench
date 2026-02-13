@@ -25,7 +25,3 @@ To run the website locally and test it exactly as it appears online:
    ```
 
 This will start a local server (typically at `http://localhost:8888`) that serves both the static frontend files and runs the Netlify functions locally, giving you the exact same experience as the deployed site.
-
-## License
-
-High Taste Testers 2025™
