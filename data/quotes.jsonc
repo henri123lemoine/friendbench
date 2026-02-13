@@ -99,6 +99,7 @@
   {
     "text": "Friend test passed. Congrats.",
     "author": "ThePrimeagen",
-    "models": ["Opus 4.5"]
+    "models": ["Opus 4.5"],
+    "showModelInline": true
   }
 ]
