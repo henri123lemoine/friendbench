@@ -253,129 +253,184 @@
       );
     };
 
-    // Chart configuration
-    const container = document.getElementById("chart-container");
-    const containerWidth = container.offsetWidth;
-    const chartWidth = Math.max(containerWidth, 800);
-    const config = {
-      width: chartWidth,
-      height: chartWidth / 1.7, // Maintain 1.7:1 aspect ratio
-      margin: {
-        top: 70,
-        right: 80,
-        bottom: 100,
-        left: 80,
-      },
+    // Measure actual SVG rendered text width
+    const measureSvgTextWidth = (text, fontSize = 12, fontFamily = 'Arial') => {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      textEl.setAttribute("font-family", fontFamily);
+      textEl.setAttribute("font-size", fontSize);
+      textEl.textContent = text;
+      svg.appendChild(textEl);
+      document.body.appendChild(svg);
+      const width = textEl.getComputedTextLength();
+      document.body.removeChild(svg);
+      return width;
     };
 
-    // Minimal chart generator
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", `0 0 ${config.width} ${config.height}`);
-    svg.setAttribute("width", "100%");
-    svg.setAttribute("height", "100%");
+    // Find widest model name - measure the joined version since horizontal mode joins lines
+    const getWidestLabelWidth = (models) => {
+      return Math.max(...models.map(m => {
+        const joinedName = m.name.replace('\n', ' ');
+        return measureSvgTextWidth(joinedName, 12);
+      }));
+    };
 
-    // Calculate chart area height
-    const chartHeight = config.height - config.margin.top - config.margin.bottom;
-
-    // Background
-    svg.innerHTML = `
-      <rect width="${config.width}" height="${config.height}" fill="#f8f9fa"/>
-
-      <!-- Title -->
-      <text x="${config.width / 2}" y="${config.margin.top - 18}"
-            font-family="Arial" font-size="32" font-weight="bold"
-            text-anchor="middle" fill="#333">FriendBench™</text>
-
-      <!-- Subtitle -->
-      <text x="${config.width / 2}" y="${config.margin.top + 8}"
-            font-family="Arial" font-size="13" font-style="italic"
-            text-anchor="middle" fill="#666">A systematic assessment of amicability in large language models</text>
-
-      <!-- Axes -->
-      <line x1="${config.margin.left}" y1="${config.margin.top
-      }"
-            x2="${config.margin.left}" y2="${config.height - config.margin.bottom
-      }"
-            stroke="#333" stroke-width="2"/>
-      <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom
-      }"
-            x2="${config.width - config.margin.right}" y2="${config.height - config.margin.bottom
-      }"
-            stroke="#333" stroke-width="2"/>
-
-      <!-- Y-axis ticks and labels -->
-      ${[0, 25, 50, 75, 100]
-        .map(
-          (tick) => `
-        <line x1="${config.margin.left - 5}" y1="${config.height - config.margin.bottom - (tick / 100) * chartHeight
-            }"
-              x2="${config.margin.left}" y2="${config.height - config.margin.bottom - (tick / 100) * chartHeight
-            }"
-              stroke="#333" stroke-width="2"/>
-        <text x="${config.margin.left - 10}" y="${config.height - config.margin.bottom - (tick / 100) * chartHeight + 5
-            }"
-              font-family="Arial" font-size="12" text-anchor="end" fill="#666">${tick}</text>
-      `
-        )
-        .join("")}
-
-      <!-- Y-axis label -->
-      <text x="${config.margin.left - 45}" y="${config.margin.top + chartHeight / 2
-      }"
-            font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle"
-            fill="#666" transform="rotate(-90, ${config.margin.left - 45}, ${config.margin.top + chartHeight / 2
-      })">
-        Friend Score
-      </text>
-    `;
-
-    // Calculate bar spacing based on number of models
+    const container = document.getElementById("chart-container");
+    const widestLabel = getWidestLabelWidth(sortedData);
     const totalModels = sortedData.length;
-    const availableWidth =
-      config.width - config.margin.left - config.margin.right;
-    const barWidth = Math.min(75, availableWidth / (totalModels + 1) - 15);
-    const totalBarsWidth = barWidth * totalModels;
-    const totalSpacingWidth = availableWidth - totalBarsWidth;
-    const spacing = totalSpacingWidth / (totalModels + 1);
 
-    // Generate bars and labels
-    sortedData.forEach((model, i) => {
-      const x = config.margin.left + spacing + i * (barWidth + spacing);
-      const height = (model.score / 100) * chartHeight;
-      const y = config.height - config.margin.bottom - height;
-      const color = getColor(i, totalModels);
-      const lines = model.name.split("\n");
-      const lineHeight = 14;
+    function renderChart() {
+      container.innerHTML = '';
+      const containerWidth = container.offsetWidth;
 
-      svg.innerHTML += `
-        <rect x="${x}" y="${y}" width="${barWidth}" height="${height}"
-          fill="${color}" opacity="0.8" rx="5"/>
-        <text x="${x + barWidth / 2}" y="${config.height -
-        config.margin.bottom +
-        30 -
-        ((lines.length - 1) * lineHeight) / 2
-        }"
-          font-family="Arial" font-size="12"
-          text-anchor="middle" fill="#333">
-          ${lines
-          .map(
-            (line, index) =>
-              `<tspan x="${x + barWidth / 2}" dy="${index === 0 ? 0 : lineHeight
-              }">${line}</tspan>`
-          )
-          .join("")}
-        </text>
+      const useHorizontalLayout = containerWidth < 480;
+
+      const labelBarGap = 8;
+      const horizontalLeftMargin = widestLabel + labelBarGap;
+      const chartWidth = containerWidth;
+      const barHeight = 28;
+      const barSpacing = 8;
+
+      // Header dimensions
+      const titleFontSize = 32;
+      const subtitleFontSize = 13;
+      const titleY = titleFontSize + 10;
+      const subtitleY = titleY + subtitleFontSize + 10;
+      const headerHeight = subtitleY + 15;
+
+      // Footer dimensions - needs space for axis labels (18px below axis) + gap + footer text
+      const footerFontSize = 12;
+      const axisLabelSpace = 25;
+      const footerHeight = axisLabelSpace + footerFontSize + 15;
+
+      const horizontalChartHeight = headerHeight + (totalModels * (barHeight + barSpacing)) + barSpacing + footerHeight;
+      const chartHeight = useHorizontalLayout ? horizontalChartHeight : containerWidth / 1.7;
+
+      const config = {
+        width: chartWidth,
+        height: chartHeight,
+        margin: useHorizontalLayout
+          ? { top: headerHeight, right: 50, bottom: footerHeight, left: horizontalLeftMargin }
+          : { top: 70, right: 80, bottom: 100, left: 80 },
+      };
+
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", `0 0 ${config.width} ${config.height}`);
+      svg.setAttribute("width", "100%");
+      svg.setAttribute("height", "100%");
+      svg.setAttribute("overflow", "visible");
+
+      const chartAreaHeight = config.height - config.margin.top - config.margin.bottom;
+      const chartAreaWidth = config.width - config.margin.left - config.margin.right;
+
+      const headerSvg = `
+        <rect width="${config.width}" height="${config.height}" fill="#f8f9fa"/>
+        <text x="${config.width / 2}" y="${titleY}"
+              font-family="Arial" font-size="${titleFontSize}" font-weight="bold"
+              text-anchor="middle" fill="#333">FriendBench™</text>
+        <text x="${config.width / 2}" y="${subtitleY}"
+              font-family="Arial" font-size="${subtitleFontSize}" font-style="italic"
+              text-anchor="middle" fill="#666">A systematic assessment of amicability in large language models</text>
       `;
+
+      if (useHorizontalLayout) {
+        const hBarHeight = barHeight;
+        const hSpacing = barSpacing;
+
+        svg.innerHTML = headerSvg + `
+          <line x1="${config.margin.left}" y1="${config.margin.top}"
+                x2="${config.margin.left}" y2="${config.height - config.margin.bottom}"
+                stroke="#333" stroke-width="2"/>
+          <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom}"
+                x2="${config.width - config.margin.right}" y2="${config.height - config.margin.bottom}"
+                stroke="#333" stroke-width="2"/>
+          ${[0, 25, 50, 75, 100].map(tick => `
+            <line x1="${config.margin.left + (tick / 100) * chartAreaWidth}" y1="${config.height - config.margin.bottom}"
+                  x2="${config.margin.left + (tick / 100) * chartAreaWidth}" y2="${config.height - config.margin.bottom + 5}"
+                  stroke="#333" stroke-width="2"/>
+            <text x="${config.margin.left + (tick / 100) * chartAreaWidth}" y="${config.height - config.margin.bottom + 18}"
+                  font-family="Arial" font-size="12" text-anchor="middle" fill="#666">${tick}</text>
+          `).join('')}
+        `;
+
+        sortedData.forEach((model, i) => {
+          const y = config.margin.top + hSpacing + i * (hBarHeight + hSpacing);
+          const hBarWidth = (model.score / 100) * chartAreaWidth;
+          const color = getColor(i, totalModels);
+          const displayName = model.name.replace('\n', ' ');
+
+          svg.innerHTML += `
+            <text x="${config.margin.left - labelBarGap}" y="${y + hBarHeight / 2 + 4}"
+                  font-family="Arial" font-size="12" text-anchor="end" fill="#333">${displayName}</text>
+            <rect x="${config.margin.left}" y="${y}" width="${hBarWidth}" height="${hBarHeight}"
+                  fill="${color}" opacity="0.8" rx="4"/>
+            <text x="${config.margin.left + hBarWidth + 6}" y="${y + hBarHeight / 2 + 4}"
+                  font-family="Arial" font-size="11" text-anchor="start" fill="#666">${model.score}</text>
+          `;
+        });
+      } else {
+        svg.innerHTML = headerSvg + `
+          <line x1="${config.margin.left}" y1="${config.margin.top}"
+                x2="${config.margin.left}" y2="${config.height - config.margin.bottom}"
+                stroke="#333" stroke-width="2"/>
+          <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom}"
+                x2="${config.width - config.margin.right}" y2="${config.height - config.margin.bottom}"
+                stroke="#333" stroke-width="2"/>
+          ${[0, 25, 50, 75, 100].map(tick => `
+            <line x1="${config.margin.left - 5}" y1="${config.height - config.margin.bottom - (tick / 100) * chartAreaHeight}"
+                  x2="${config.margin.left}" y2="${config.height - config.margin.bottom - (tick / 100) * chartAreaHeight}"
+                  stroke="#333" stroke-width="2"/>
+            <text x="${config.margin.left - 10}" y="${config.height - config.margin.bottom - (tick / 100) * chartAreaHeight + 5}"
+                  font-family="Arial" font-size="12" text-anchor="end" fill="#666">${tick}</text>
+          `).join('')}
+          <text x="${config.margin.left - 45}" y="${config.margin.top + chartAreaHeight / 2}"
+                font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle"
+                fill="#666" transform="rotate(-90, ${config.margin.left - 45}, ${config.margin.top + chartAreaHeight / 2})">
+            Friend Score
+          </text>
+        `;
+
+        const vBarWidth = Math.min(100, chartAreaWidth / (totalModels + 1) - 10);
+        const totalBarsWidth = vBarWidth * totalModels;
+        const spacing = (chartAreaWidth - totalBarsWidth) / (totalModels + 1);
+
+        sortedData.forEach((model, i) => {
+          const x = config.margin.left + spacing + i * (vBarWidth + spacing);
+          const vBarHeight = (model.score / 100) * chartAreaHeight;
+          const y = config.height - config.margin.bottom - vBarHeight;
+          const color = getColor(i, totalModels);
+          const lines = model.name.split("\n");
+          const lineHeight = 14;
+
+          svg.innerHTML += `
+            <rect x="${x}" y="${y}" width="${vBarWidth}" height="${vBarHeight}"
+                  fill="${color}" opacity="0.8" rx="5"/>
+            <text x="${x + vBarWidth / 2}" y="${config.height - config.margin.bottom + 30 - ((lines.length - 1) * lineHeight) / 2}"
+                  font-family="Arial" font-size="12" text-anchor="middle" fill="#333">
+              ${lines.map((line, index) =>
+                `<tspan x="${x + vBarWidth / 2}" dy="${index === 0 ? 0 : lineHeight}">${line}</tspan>`
+              ).join('')}
+            </text>
+          `;
+        });
+      }
+
+      const footerY = config.height - config.margin.bottom + footerFontSize + (config.margin.bottom - footerFontSize) / 2;
+      svg.innerHTML += `
+        <text x="${config.width / 2}" y="${footerY}"
+              font-family="Arial" font-size="${footerFontSize}" text-anchor="middle" fill="#999">High Taste Testers 2025™</text>
+      `;
+
+      container.appendChild(svg);
+    }
+
+    renderChart();
+
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(renderChart, 100);
     });
-
-    // Copyright
-    svg.innerHTML += `
-      <text x="${config.width / 2}" y="${config.height - 30
-      }" font-family="Arial" font-size="12"
-        text-anchor="middle" fill="#999">High Taste Testers 2025™</text>
-    `;
-
-    document.getElementById("chart-container").appendChild(svg);
 
     // Populate quotes grid
     const quotesGrid = document.getElementById("quotes-grid");
