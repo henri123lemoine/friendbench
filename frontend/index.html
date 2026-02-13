@@ -283,11 +283,12 @@
       container.innerHTML = '';
       const containerWidth = container.offsetWidth;
 
-      const useHorizontalLayout = containerWidth < 480;
+      const useHorizontalLayout = containerWidth < 640;
 
       const labelBarGap = 8;
       const horizontalLeftMargin = widestLabel + labelBarGap;
-      const chartWidth = containerWidth;
+      const referenceWidth = 1000;
+      const chartWidth = useHorizontalLayout ? containerWidth : referenceWidth;
       const barHeight = 28;
       const barSpacing = 8;
 
@@ -304,7 +305,7 @@
       const footerHeight = axisLabelSpace + footerFontSize + 15;
 
       const horizontalChartHeight = headerHeight + (totalModels * (barHeight + barSpacing)) + barSpacing + footerHeight;
-      const chartHeight = useHorizontalLayout ? horizontalChartHeight : containerWidth / 1.7;
+      const chartHeight = useHorizontalLayout ? horizontalChartHeight : chartWidth / 1.7;
 
       const config = {
         width: chartWidth,
