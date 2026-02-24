@@ -229,8 +229,7 @@
     // Find widest model name - measure the joined version since horizontal mode joins lines
     const getWidestLabelWidth = (models) => {
       return Math.max(...models.map(m => {
-        const joinedName = m.name.replace('\n', ' ');
-        return measureSvgTextWidth(joinedName, 12);
+        return measureSvgTextWidth(m.name, 12);
       }));
     };
 
@@ -294,13 +293,11 @@
         sortedData.forEach((model, i) => {
           const y = config.margin.top + barSpacing + i * (barHeight + barSpacing);
           const hBarWidth = (model.score / 100) * chartAreaWidth;
-          const displayName = model.name.replace('\n', ' ');
-
           barsSvg += `
             <text x="${config.margin.left - labelBarGap}" y="${y + barHeight / 2 + 4}"
-                  font-family="${fontFamily}" font-size="12" text-anchor="end" fill="#333">${displayName}</text>
+                  font-family="${fontFamily}" font-size="12" text-anchor="end" fill="#333">${model.name}</text>
             <path d="${roundedRightRect(config.margin.left, y, hBarWidth, barHeight, 4)}" fill="${barColor}">
-              <title>${displayName}: ${model.score}</title>
+              <title>${model.name}: ${model.score}</title>
             </path>
             <text x="${config.margin.left + hBarWidth + 6}" y="${y + barHeight / 2 + 4}"
                   font-family="${fontFamily}" font-size="11" text-anchor="start" fill="#555">${model.score}</text>
@@ -329,18 +326,17 @@
           const x = config.margin.left + spacing + i * (vBarWidth + spacing);
           const vBarHeight = (model.score / 100) * chartAreaHeight;
           const y = config.height - config.margin.bottom - vBarHeight;
-          const displayName = model.name.replace('\n', ' ');
           const barCenter = x + vBarWidth / 2;
           const labelX = barCenter + 12;
           const labelY = config.height - config.margin.bottom + 14;
 
           barsSvg += `
             <path d="${roundedTopRect(x, y, vBarWidth, vBarHeight, 4)}" fill="${barColor}">
-              <title>${displayName}: ${model.score}</title>
+              <title>${model.name}: ${model.score}</title>
             </path>
             <text x="${labelX}" y="${labelY}"
                   font-family="${fontFamily}" font-size="11" text-anchor="end" fill="#333"
-                  transform="rotate(-45, ${labelX}, ${labelY})">${displayName}</text>
+                  transform="rotate(-45, ${labelX}, ${labelY})">${model.name}</text>
           `;
         });
 
