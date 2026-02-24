@@ -26,7 +26,8 @@ def eval_group():
 @click.option("--no-thinking", is_flag=True, help="Skip thinking variants")
 @click.option("--thinking-only", is_flag=True, help="Run only thinking variants")
 @click.option("--exclude", multiple=True, help="Exclude models whose name contains this string")
-def run(models, epochs, log_dir, category, multi_turn, no_thinking, thinking_only, exclude):
+@click.option("--max-connections", default=None, type=int, help="Max concurrent API requests per model")
+def run(models, epochs, log_dir, category, multi_turn, no_thinking, thinking_only, exclude, max_connections):
     from inspect_ai import eval as inspect_eval
     from .models import model_entries
 
@@ -36,6 +37,8 @@ def run(models, epochs, log_dir, category, multi_turn, no_thinking, thinking_onl
     if multi_turn:
         task_args["multi_turn"] = True
 
+    conn_args = {"max_connections": max_connections} if max_connections else {}
+
     if models:
         logs = inspect_eval(
             f"{TASKS_FILE}@friendbench",
@@ -43,6 +46,7 @@ def run(models, epochs, log_dir, category, multi_turn, no_thinking, thinking_onl
             epochs=epochs,
             log_dir=log_dir,
             task_args=task_args,
+            **conn_args,
         )
     else:
         entries = model_entries()
@@ -73,6 +77,7 @@ def run(models, epochs, log_dir, category, multi_turn, no_thinking, thinking_onl
                 log_dir=log_dir,
                 task_args=task_args,
                 **config,
+                **conn_args,
             )
             logs.extend(result)
 
