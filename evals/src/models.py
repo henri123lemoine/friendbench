@@ -25,11 +25,21 @@ def inspect_model_id(entry: dict) -> str | None:
     return f"{prefix}/{api_id}"
 
 
+def model_entries() -> list[dict]:
+    results = []
+    for m in load_models():
+        if m.get("hidden"):
+            continue
+        mid = inspect_model_id(m)
+        if not mid:
+            continue
+        results.append({
+            "id": mid,
+            "name": m["name"],
+            "generation_config": m.get("generation_config", {}),
+        })
+    return results
+
+
 def default_models() -> list[str]:
-    return [
-        mid
-        for m in load_models()
-        if not m.get("hidden")
-        for mid in [inspect_model_id(m)]
-        if mid
-    ]
+    return [e["id"] for e in model_entries()]
