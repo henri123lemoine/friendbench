@@ -70,6 +70,8 @@ def run(models, epochs, log_dir, category, multi_turn, no_thinking, thinking_onl
         for config_json, group in groups.items():
             config = json.loads(config_json)
             model_ids = [e["id"] for e in group]
+            names = [e["name"] for e in group]
+            click.echo(f"\n  Running: {', '.join(names)}\n")
             result = inspect_eval(
                 f"{TASKS_FILE}@friendbench",
                 model=model_ids,
