@@ -25,12 +25,28 @@ def run(models, epochs, log_dir):
 
     models = list(models) or default_models()
 
-    inspect_eval(
+    logs = inspect_eval(
         f"{TASKS_FILE}@friendbench",
         model=models,
         epochs=epochs,
         log_dir=log_dir,
     )
+
+    rows = []
+    for log in logs:
+        model = log.eval.model
+        if log.status == "success":
+            acc = log.results.scores[0].metrics["accuracy"].value
+            rows.append((model, f"{acc:.0%}"))
+        else:
+            rows.append((model, log.status.upper()))
+
+    rows.sort(key=lambda r: r[1], reverse=True)
+    width = max(len(r[0]) for r in rows) + 2
+
+    click.echo()
+    for model, result in rows:
+        click.echo(f"  {model:<{width}} {result}")
 
 
 @eval_group.command("list-models")
