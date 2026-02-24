@@ -19,17 +19,26 @@ def eval_group():
 @click.option("--models", multiple=True)
 @click.option("--epochs", default=1, type=int)
 @click.option("--log-dir", default="./logs")
-def run(models, epochs, log_dir):
+@click.option("--category", multiple=True, help="Filter by category (e.g. sycophancy, relationship)")
+@click.option("--multi-turn", is_flag=True, help="Run only multi-turn pressure questions")
+def run(models, epochs, log_dir, category, multi_turn):
     from inspect_ai import eval as inspect_eval
     from .models import default_models
 
     models = list(models) or default_models()
+
+    task_args = {}
+    if category:
+        task_args["categories"] = ",".join(category)
+    if multi_turn:
+        task_args["multi_turn"] = True
 
     logs = inspect_eval(
         f"{TASKS_FILE}@friendbench",
         model=models,
         epochs=epochs,
         log_dir=log_dir,
+        task_args=task_args,
     )
 
     rows = []
