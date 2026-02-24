@@ -1,5 +1,9 @@
 [
   {
+    "name": "Sonnet\n4.6",
+    "score": 80
+  },
+  {
     "name": "Opus\n4.6",
     "score": 73
   },
@@ -33,7 +37,7 @@
   },
   {
     "name": "Grok\n4",
-    "score": 39
+    "score": 41
   },
   {
     "name": "Grok\n3",
@@ -41,11 +45,15 @@
   },
   {
     "name": "GPT\n5",
-    "score": 47
+    "score": 34
+  },
+  {
+    "name": "GPT\n5.2",
+    "score": 59
   },
   {
     "name": "GPT\n5.1",
-    "score": 64
+    "score": 54
   },
   {
     "name": "GPT\n4.5",
@@ -91,6 +99,10 @@
   {
     "name": "Gemini\n3 Pro",
     "score": 64
+  },
+  {
+    "name": "Gemini\n3.1 Pro",
+    "score": 67
   }
 ]
 /*
