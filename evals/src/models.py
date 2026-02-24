@@ -5,7 +5,7 @@ import yaml
 PROVIDER_PREFIXES = {
     "Anthropic": "anthropic",
     "OpenAI": "openai",
-    "xAI": "xai",
+    "xAI": "grok",
     "DeepSeek": "deepseek",
     "Google": "google",
 }

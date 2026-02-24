@@ -20,28 +20,33 @@
 
 - name: Sonnet 4
   provider: Anthropic
-  api_id: claude-sonnet-4
+  api_id: claude-sonnet-4-0
   score: 68
 
-- name: Opus 4&4.1
+- name: Opus 4.1
   provider: Anthropic
-  api_id: claude-opus-4
+  api_id: claude-opus-4-1
+  score: 72
+
+- name: Opus 4
+  provider: Anthropic
+  api_id: claude-opus-4-0
   score: 72
 
 - name: Sonnet 3.7
   provider: Anthropic
-  api_id: claude-3-7-sonnet
   score: 43
+  hidden: true
 
 - name: Sonnet 3.6
   provider: Anthropic
-  api_id: claude-3-5-sonnet
   score: 74
+  hidden: true
 
 - name: Opus 3
   provider: Anthropic
-  api_id: claude-3-opus
   score: 68
+  hidden: true
 
 - name: Grok 4
   provider: xAI
@@ -70,8 +75,9 @@
 
 - name: GPT 4.5
   provider: OpenAI
-  api_id: gpt-4.5
+  api_id: gpt-4.5-preview
   score: 63
+  hidden: true
 
 - name: GPT 4o (old)
   provider: OpenAI
@@ -117,12 +123,12 @@
 
 - name: Gemini 3 Pro
   provider: Google
-  api_id: gemini-3-pro
+  api_id: gemini-3-pro-preview
   score: 64
 
 - name: Gemini 3.1 Pro
   provider: Google
-  api_id: gemini-3.1-pro
+  api_id: gemini-3.1-pro-preview
   score: 67
 
 # API model IDs
