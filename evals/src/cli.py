@@ -17,13 +17,15 @@ def eval_group():
 
 @eval_group.command()
 @click.option("--models", multiple=True, required=True)
+@click.option("--epochs", default=1, type=int)
 @click.option("--log-dir", default="./logs")
-def run(models, log_dir):
+def run(models, epochs, log_dir):
     from inspect_ai import eval as inspect_eval
 
     inspect_eval(
         f"{TASKS_FILE}@friendbench",
         model=list(models),
+        epochs=epochs,
         log_dir=log_dir,
     )
 
