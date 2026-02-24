@@ -7,11 +7,14 @@
   <title>FriendBench™</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <meta name="description" content="The official friendliness benchmark for LLMs" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
       padding: 20px;
-      font-family: Arial, sans-serif;
+      font-family: Inter, system-ui, sans-serif;
       line-height: 1.6;
       color: #333;
       background-color: #f8f9fa;
@@ -197,64 +200,20 @@
     // Sort models by score in descending order
     const sortedData = [...filteredModels].sort((a, b) => b.score - a.score);
 
-    // Color interpolation helper functions
-    const hexToRgb = (hex) => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result
-        ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-        : null;
+    // Helper: SVG path for a rect with only top corners rounded
+    const roundedTopRect = (x, y, w, h, r) => {
+      r = Math.min(r, w / 2, h);
+      return `M${x},${y + h} L${x},${y + r} Q${x},${y} ${x + r},${y} L${x + w - r},${y} Q${x + w},${y} ${x + w},${y + r} L${x + w},${y + h} Z`;
     };
 
-    const rgbToHex = ({r, g, b}) =>
-      "#" +
-      [r, g, b]
-        .map((x) => Math.round(x).toString(16).padStart(2, "0"))
-        .join("");
-
-    const interpolateColor = (color1, color2, factor) => {
-      const c1 = hexToRgb(color1);
-      const c2 = hexToRgb(color2);
-      return {
-        r: c1.r + (c2.r - c1.r) * factor,
-        g: c1.g + (c2.g - c1.g) * factor,
-        b: c1.b + (c2.b - c1.b) * factor,
-      };
-    };
-
-    // Generate colors for any number of points
-    const getColor = (index, total) => {
-      // Define base colors for gradient
-      const baseColors = ["#9370DB", "#1E90FF", "#3CB371"];
-
-      if (total === 1) return baseColors[0];
-
-      // Calculate which segment of the gradient we're in
-      const segments = baseColors.length - 1;
-      const segment = (index / (total - 1)) * segments;
-      const segmentIndex = Math.floor(segment);
-      const segmentFactor = segment - segmentIndex;
-
-      // If we're exactly on a base color, return it
-      if (segmentFactor === 0 && baseColors[segmentIndex]) {
-        return baseColors[segmentIndex];
-      }
-
-      // Otherwise interpolate between the two nearest base colors
-      return rgbToHex(
-        interpolateColor(
-          baseColors[segmentIndex],
-          baseColors[segmentIndex + 1],
-          segmentFactor
-        )
-      );
+    // Helper: SVG path for a rect with only right corners rounded (horizontal bars)
+    const roundedRightRect = (x, y, w, h, r) => {
+      r = Math.min(r, h / 2, w);
+      return `M${x},${y} L${x + w - r},${y} Q${x + w},${y} ${x + w},${y + r} L${x + w},${y + h - r} Q${x + w},${y + h} ${x + w - r},${y + h} L${x},${y + h} Z`;
     };
 
     // Measure actual SVG rendered text width
-    const measureSvgTextWidth = (text, fontSize = 12, fontFamily = 'Arial') => {
+    const measureSvgTextWidth = (text, fontSize = 12, fontFamily = 'Inter, system-ui, sans-serif') => {
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
       textEl.setAttribute("font-family", fontFamily);
@@ -283,6 +242,8 @@
       container.innerHTML = '';
       const containerWidth = container.offsetWidth;
 
+      const fontFamily = 'Inter, system-ui, sans-serif';
+      const barColor = '#4e79a7';
       const useHorizontalLayout = containerWidth < 640;
 
       const labelBarGap = 8;
@@ -292,27 +253,22 @@
       const barHeight = 28;
       const barSpacing = 8;
 
-      // Header dimensions
-      const titleFontSize = 32;
+      const titleFontSize = 24;
       const subtitleFontSize = 13;
       const titleY = titleFontSize + 10;
-      const subtitleY = titleY + subtitleFontSize + 10;
+      const subtitleY = titleY + subtitleFontSize + 8;
       const headerHeight = subtitleY + 15;
 
-      // Footer dimensions - needs space for axis labels (18px below axis) + gap + footer text
-      const footerFontSize = 12;
-      const axisLabelSpace = 25;
-      const footerHeight = axisLabelSpace + footerFontSize + 15;
-
-      const horizontalChartHeight = headerHeight + (totalModels * (barHeight + barSpacing)) + barSpacing + footerHeight;
+      const bottomMargin = useHorizontalLayout ? 35 : 100;
+      const horizontalChartHeight = headerHeight + (totalModels * (barHeight + barSpacing)) + barSpacing + bottomMargin;
       const chartHeight = useHorizontalLayout ? horizontalChartHeight : chartWidth / 1.7;
 
       const config = {
         width: chartWidth,
         height: chartHeight,
         margin: useHorizontalLayout
-          ? { top: headerHeight, right: 50, bottom: footerHeight, left: horizontalLeftMargin }
-          : { top: 70, right: 80, bottom: 100, left: 80 },
+          ? { top: headerHeight, right: 50, bottom: bottomMargin, left: horizontalLeftMargin }
+          : { top: headerHeight, right: 80, bottom: 100, left: 80 },
       };
 
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -325,72 +281,46 @@
       const chartAreaWidth = config.width - config.margin.left - config.margin.right;
 
       const headerSvg = `
-        <rect width="${config.width}" height="${config.height}" fill="#f8f9fa"/>
         <text x="${config.width / 2}" y="${titleY}"
-              font-family="Arial" font-size="${titleFontSize}" font-weight="bold"
+              font-family="${fontFamily}" font-size="${titleFontSize}" font-weight="bold"
               text-anchor="middle" fill="#333">FriendBench™</text>
         <text x="${config.width / 2}" y="${subtitleY}"
-              font-family="Arial" font-size="${subtitleFontSize}" font-style="italic"
+              font-family="${fontFamily}" font-size="${subtitleFontSize}"
               text-anchor="middle" fill="#666">A systematic assessment of amicability in large language models</text>
       `;
 
       if (useHorizontalLayout) {
-        const hBarHeight = barHeight;
-        const hSpacing = barSpacing;
-
-        svg.innerHTML = headerSvg + `
-          <line x1="${config.margin.left}" y1="${config.margin.top}"
-                x2="${config.margin.left}" y2="${config.height - config.margin.bottom}"
-                stroke="#333" stroke-width="2"/>
-          <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom}"
-                x2="${config.width - config.margin.right}" y2="${config.height - config.margin.bottom}"
-                stroke="#333" stroke-width="2"/>
-          ${[0, 25, 50, 75, 100].map(tick => `
-            <line x1="${config.margin.left + (tick / 100) * chartAreaWidth}" y1="${config.height - config.margin.bottom}"
-                  x2="${config.margin.left + (tick / 100) * chartAreaWidth}" y2="${config.height - config.margin.bottom + 5}"
-                  stroke="#333" stroke-width="2"/>
-            <text x="${config.margin.left + (tick / 100) * chartAreaWidth}" y="${config.height - config.margin.bottom + 18}"
-                  font-family="Arial" font-size="12" text-anchor="middle" fill="#666">${tick}</text>
-          `).join('')}
-        `;
-
+        let barsSvg = '';
         sortedData.forEach((model, i) => {
-          const y = config.margin.top + hSpacing + i * (hBarHeight + hSpacing);
+          const y = config.margin.top + barSpacing + i * (barHeight + barSpacing);
           const hBarWidth = (model.score / 100) * chartAreaWidth;
-          const color = getColor(i, totalModels);
           const displayName = model.name.replace('\n', ' ');
 
-          svg.innerHTML += `
-            <text x="${config.margin.left - labelBarGap}" y="${y + hBarHeight / 2 + 4}"
-                  font-family="Arial" font-size="12" text-anchor="end" fill="#333">${displayName}</text>
-            <rect x="${config.margin.left}" y="${y}" width="${hBarWidth}" height="${hBarHeight}"
-                  fill="${color}" opacity="0.8" rx="4"/>
-            <text x="${config.margin.left + hBarWidth + 6}" y="${y + hBarHeight / 2 + 4}"
-                  font-family="Arial" font-size="11" text-anchor="start" fill="#666">${model.score}</text>
+          barsSvg += `
+            <text x="${config.margin.left - labelBarGap}" y="${y + barHeight / 2 + 4}"
+                  font-family="${fontFamily}" font-size="12" text-anchor="end" fill="#333">${displayName}</text>
+            <path d="${roundedRightRect(config.margin.left, y, hBarWidth, barHeight, 4)}" fill="${barColor}">
+              <title>${displayName}: ${model.score}</title>
+            </path>
+            <text x="${config.margin.left + hBarWidth + 6}" y="${y + barHeight / 2 + 4}"
+                  font-family="${fontFamily}" font-size="11" text-anchor="start" fill="#555">${model.score}</text>
           `;
         });
-      } else {
-        svg.innerHTML = headerSvg + `
-          <line x1="${config.margin.left}" y1="${config.margin.top}"
-                x2="${config.margin.left}" y2="${config.height - config.margin.bottom}"
-                stroke="#333" stroke-width="2"/>
-          <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom}"
-                x2="${config.width - config.margin.right}" y2="${config.height - config.margin.bottom}"
-                stroke="#333" stroke-width="2"/>
-          ${[0, 25, 50, 75, 100].map(tick => `
-            <line x1="${config.margin.left - 5}" y1="${config.height - config.margin.bottom - (tick / 100) * chartAreaHeight}"
-                  x2="${config.margin.left}" y2="${config.height - config.margin.bottom - (tick / 100) * chartAreaHeight}"
-                  stroke="#333" stroke-width="2"/>
-            <text x="${config.margin.left - 10}" y="${config.height - config.margin.bottom - (tick / 100) * chartAreaHeight + 5}"
-                  font-family="Arial" font-size="12" text-anchor="end" fill="#666">${tick}</text>
-          `).join('')}
-          <text x="${config.margin.left - 45}" y="${config.margin.top + chartAreaHeight / 2}"
-                font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle"
-                fill="#666" transform="rotate(-90, ${config.margin.left - 45}, ${config.margin.top + chartAreaHeight / 2})">
-            Friend Score
-          </text>
-        `;
 
+        svg.innerHTML = headerSvg + `
+          ${[0, 25, 50, 75, 100].map(tick => `
+            <line x1="${config.margin.left + (tick / 100) * chartAreaWidth}" y1="${config.margin.top}"
+                  x2="${config.margin.left + (tick / 100) * chartAreaWidth}" y2="${config.height - config.margin.bottom}"
+                  stroke="${tick === 0 ? '#ccc' : '#e0e0e0'}" stroke-width="1"/>
+          `).join('')}
+          ${[0, 25, 50, 75, 100].map(tick => `
+            <text x="${config.margin.left + (tick / 100) * chartAreaWidth}" y="${config.height - config.margin.bottom + 18}"
+                  font-family="${fontFamily}" font-size="11" text-anchor="middle" fill="#888">${tick}</text>
+          `).join('')}
+          ${barsSvg}
+        `;
+      } else {
+        let barsSvg = '';
         const vBarWidth = Math.min(100, chartAreaWidth / (totalModels + 1) - 10);
         const totalBarsWidth = vBarWidth * totalModels;
         const spacing = (chartAreaWidth - totalBarsWidth) / (totalModels + 1);
@@ -399,28 +329,39 @@
           const x = config.margin.left + spacing + i * (vBarWidth + spacing);
           const vBarHeight = (model.score / 100) * chartAreaHeight;
           const y = config.height - config.margin.bottom - vBarHeight;
-          const color = getColor(i, totalModels);
-          const lines = model.name.split("\n");
-          const lineHeight = 14;
+          const displayName = model.name.replace('\n', ' ');
+          const barCenter = x + vBarWidth / 2;
+          const labelX = barCenter + 12;
+          const labelY = config.height - config.margin.bottom + 14;
 
-          svg.innerHTML += `
-            <rect x="${x}" y="${y}" width="${vBarWidth}" height="${vBarHeight}"
-                  fill="${color}" opacity="0.8" rx="5"/>
-            <text x="${x + vBarWidth / 2}" y="${config.height - config.margin.bottom + 30 - ((lines.length - 1) * lineHeight) / 2}"
-                  font-family="Arial" font-size="12" text-anchor="middle" fill="#333">
-              ${lines.map((line, index) =>
-                `<tspan x="${x + vBarWidth / 2}" dy="${index === 0 ? 0 : lineHeight}">${line}</tspan>`
-              ).join('')}
-            </text>
+          barsSvg += `
+            <path d="${roundedTopRect(x, y, vBarWidth, vBarHeight, 4)}" fill="${barColor}">
+              <title>${displayName}: ${model.score}</title>
+            </path>
+            <text x="${labelX}" y="${labelY}"
+                  font-family="${fontFamily}" font-size="11" text-anchor="end" fill="#333"
+                  transform="rotate(-45, ${labelX}, ${labelY})">${displayName}</text>
           `;
         });
-      }
 
-      const footerY = config.height - config.margin.bottom + footerFontSize + (config.margin.bottom - footerFontSize) / 2;
-      svg.innerHTML += `
-        <text x="${config.width / 2}" y="${footerY}"
-              font-family="Arial" font-size="${footerFontSize}" text-anchor="middle" fill="#999">High Taste Testers 2025™</text>
-      `;
+        svg.innerHTML = headerSvg + `
+          ${[0, 25, 50, 75, 100].map(tick => `
+            <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom - (tick / 100) * chartAreaHeight}"
+                  x2="${config.width - config.margin.right}" y2="${config.height - config.margin.bottom - (tick / 100) * chartAreaHeight}"
+                  stroke="${tick === 0 ? '#ccc' : '#e0e0e0'}" stroke-width="1"/>
+          `).join('')}
+          ${[0, 25, 50, 75, 100].map(tick => `
+            <text x="${config.margin.left - 10}" y="${config.height - config.margin.bottom - (tick / 100) * chartAreaHeight + 4}"
+                  font-family="${fontFamily}" font-size="11" text-anchor="end" fill="#888">${tick}</text>
+          `).join('')}
+          <text x="${config.margin.left - 40}" y="${config.margin.top + chartAreaHeight / 2}"
+                font-family="${fontFamily}" font-size="12" text-anchor="middle"
+                fill="#888" transform="rotate(-90, ${config.margin.left - 40}, ${config.margin.top + chartAreaHeight / 2})">
+            Friend Score
+          </text>
+          ${barsSvg}
+        `;
+      }
 
       container.appendChild(svg);
     }
