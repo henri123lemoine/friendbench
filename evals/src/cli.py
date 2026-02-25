@@ -27,7 +27,17 @@ def eval_group():
 @click.option("--thinking-only", is_flag=True, help="Run only thinking variants")
 @click.option("--exclude", multiple=True, help="Exclude models whose name contains this string")
 @click.option("--max-connections", default=None, type=int, help="Max concurrent API requests per model")
-def run(models, epochs, log_dir, category, multi_turn, no_thinking, thinking_only, exclude, max_connections):
+@click.option("--batch", is_flag=True, help="Use provider batch APIs (50% cheaper, ~24h turnaround)")
+@click.option("--fail-on-error", default=None, type=float, help="Error threshold before failing (0-1 for proportion, >1 for count)")
+@click.option("--no-fail-on-error", is_flag=True, help="Continue running even if samples error")
+@click.option("--limit", default=None, type=str, help="Limit samples to evaluate (e.g. 10 or 10-20)")
+@click.option("--max-retries", default=None, type=int, help="Max retries for model API requests")
+@click.option("--cache", is_flag=False, flag_value="true", default=None, help="Cache model generations (optionally specify duration e.g. 7D)")
+def run(
+    models, epochs, log_dir, category, multi_turn, no_thinking, thinking_only,
+    exclude, max_connections, batch, fail_on_error, no_fail_on_error, limit,
+    max_retries, cache,
+):
     from inspect_ai import eval as inspect_eval
     from .models import model_entries
 
@@ -37,7 +47,14 @@ def run(models, epochs, log_dir, category, multi_turn, no_thinking, thinking_onl
     if multi_turn:
         task_args["multi_turn"] = True
 
-    conn_args = {"max_connections": max_connections} if max_connections else {}
+    inspect_args = {k: v for k, v in {
+        "max_connections": max_connections,
+        "batch": batch or None,
+        "fail_on_error": False if no_fail_on_error else fail_on_error,
+        "limit": int(limit) if limit and limit.isdigit() else limit,
+        "max_retries": max_retries,
+        "cache": True if cache == "true" else cache,
+    }.items() if v is not None}
 
     if models:
         logs = inspect_eval(
@@ -46,7 +63,7 @@ def run(models, epochs, log_dir, category, multi_turn, no_thinking, thinking_onl
             epochs=epochs,
             log_dir=log_dir,
             task_args=task_args,
-            **conn_args,
+            **inspect_args,
         )
     else:
         entries = model_entries()
@@ -79,7 +96,7 @@ def run(models, epochs, log_dir, category, multi_turn, no_thinking, thinking_onl
                 log_dir=log_dir,
                 task_args=task_args,
                 **config,
-                **conn_args,
+                **inspect_args,
             )
             logs.extend(result)
 
@@ -102,12 +119,14 @@ def run(models, epochs, log_dir, category, multi_turn, no_thinking, thinking_onl
             or getattr(config, "reasoning_tokens", None) not in (None, 0)
         )
         display = name_lookup.get((model_id, thinking), model_id)
-        if log.status == "success":
+        if log.status == "success" and log.results:
             acc = log.results.scores[0].metrics["accuracy"].value
             rows.append((display, f"{acc:.0%}"))
         else:
             rows.append((display, log.status.upper()))
 
+    if not rows:
+        return
     rows.sort(key=lambda r: r[1], reverse=True)
     width = max(len(r[0]) for r in rows) + 2
 
