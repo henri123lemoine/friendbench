@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PressBench™</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <meta name="description" content="The official benchpress strength benchmark for LLMs">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 880px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="chart-container"></div>
+  </div>
+
+  <script type="module">
+    const response = await fetch('/api/data');
+    const { models: modelData } = await response.json();
+
+    const sortedData = [...modelData]
+      .filter(m => !m.hidden)
+      .sort((a, b) => b.score - a.score);
+
+    const hexToRgb = hex => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null;
+    };
+
+    const rgbToHex = ({r, g, b}) =>
+      '#' + [r, g, b].map(x => Math.round(x).toString(16).padStart(2, '0')).join('');
+
+    const interpolateColor = (color1, color2, factor) => {
+      const c1 = hexToRgb(color1);
+      const c2 = hexToRgb(color2);
+      return {
+        r: c1.r + (c2.r - c1.r) * factor,
+        g: c1.g + (c2.g - c1.g) * factor,
+        b: c1.b + (c2.b - c1.b) * factor
+      };
+    };
+
+    const getColor = (index, total) => {
+      const baseColors = ['#9370DB', '#1E90FF', '#3CB371'];
+      if (total === 1) return baseColors[0];
+      const segments = baseColors.length - 1;
+      const segment = (index / (total - 1)) * segments;
+      const segmentIndex = Math.floor(segment);
+      const segmentFactor = segment - segmentIndex;
+      if (segmentFactor === 0 && baseColors[segmentIndex]) {
+        return baseColors[segmentIndex];
+      }
+      return rgbToHex(
+        interpolateColor(
+          baseColors[segmentIndex],
+          baseColors[segmentIndex + 1],
+          segmentFactor
+        )
+      );
+    };
+
+    const config = {
+      width: 880,
+      height: 500,
+      margin: { top: 40, right: 80, bottom: 100, left: 80 }
+    };
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", `0 0 ${config.width} ${config.height}`);
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "100%");
+
+    svg.innerHTML = `
+      <rect width="${config.width}" height="${config.height}" fill="#f8f9fa"/>
+      <text x="${config.width/2}" y="${config.margin.top - 10}"
+            font-family="Arial" font-size="32" font-weight="bold"
+            text-anchor="middle" fill="#333">PressBench™</text>
+      <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom - 330}"
+            x2="${config.margin.left}" y2="${config.height - config.margin.bottom}"
+            stroke="#333" stroke-width="2"/>
+      <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom}"
+            x2="${config.width - config.margin.right}" y2="${config.height - config.margin.bottom}"
+            stroke="#333" stroke-width="2"/>
+      ${[0, 100, 200, 300, 400, 500].map(tick => `
+        <line x1="${config.margin.left - 5}" y1="${config.height - config.margin.bottom - (tick * 0.545)}"
+              x2="${config.margin.left}" y2="${config.height - config.margin.bottom - (tick * 0.545)}"
+              stroke="#333" stroke-width="2"/>
+        <text x="${config.margin.left - 10}" y="${config.height - config.margin.bottom - (tick * 0.545) + 5}"
+              font-family="Arial" font-size="12" text-anchor="end" fill="#666">${tick}</text>
+      `).join('')}
+      <text x="${config.margin.left - 45}" y="${config.height - config.margin.bottom - 150}"
+            font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle"
+            fill="#666" transform="rotate(-90, ${config.margin.left - 45}, ${config.height - config.margin.bottom - 150})">
+        Benchpress Lift (lbs)
+      </text>
+    `;
+
+    const totalModels = sortedData.length;
+    const availableWidth = config.width - config.margin.left - config.margin.right;
+    const barWidth = Math.min(75, (availableWidth / (totalModels + 1)) - 15);
+    const totalBarsWidth = barWidth * totalModels;
+    const totalSpacingWidth = availableWidth - totalBarsWidth;
+    const spacing = totalSpacingWidth / (totalModels + 1);
+
+    sortedData.forEach((model, i) => {
+      const x = config.margin.left + spacing + (i * (barWidth + spacing));
+      const height = model.score * 0.545;
+      const y = config.height - config.margin.bottom - height;
+      const color = getColor(i, totalModels);
+      const lines = model.name.split('\n');
+      const lineHeight = 14;
+
+      svg.innerHTML += `
+        <rect x="${x}" y="${y}" width="${barWidth}" height="${height}"
+          fill="${color}" opacity="0.8" rx="5"/>
+        <text x="${x + barWidth/2}" y="${config.height - config.margin.bottom + 30 - ((lines.length - 1) * lineHeight/2)}"
+          font-family="Arial" font-size="12"
+          text-anchor="middle" fill="#333">
+          ${lines.map((line, index) =>
+            `<tspan x="${x + barWidth/2}" dy="${index === 0 ? 0 : lineHeight}">${line}</tspan>`
+          ).join('')}
+        </text>
+      `;
+    });
+
+    svg.innerHTML += `
+      <text x="${config.width/2}" y="${config.height - 30}" font-family="Arial" font-size="12"
+            text-anchor="middle" fill="#333">© PressBench 2025</text>
+    `;
+
+    document.getElementById('chart-container').appendChild(svg);
+  </script>
+</body>
+</html>

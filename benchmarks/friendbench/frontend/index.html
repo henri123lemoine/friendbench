@@ -157,7 +157,7 @@
   </div>
 
   <script type="module">
-    const response = await fetch('/.netlify/functions/get-data');
+    const response = await fetch('/api/data');
 
     if (!response.ok) {
       console.error('Function response not ok:', response.status, response.statusText);

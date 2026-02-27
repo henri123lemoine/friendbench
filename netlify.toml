@@ -1,12 +1,8 @@
 [build]
-publish = "frontend"
-functions = "netlify/functions"
-
-[functions]
-included_files = ["data/**"]
-node_bundler = "esbuild"
+  publish = "benchmarks/friendbench/frontend"
+  functions = "netlify/functions"
 
 [[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200
+  from = "/api/data"
+  to = "/.netlify/functions/get-data"
+  status = 200

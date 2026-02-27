@@ -7,7 +7,7 @@ from inspect_ai.model import ChatMessageSystem, ChatMessageUser, get_model
 from inspect_ai.scorer import model_graded_qa
 from inspect_ai.solver import Generate, Solver, TaskState, generate, solver
 
-QUESTIONS_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "questions.yaml"
+QUESTIONS_FILE = Path(__file__).resolve().parent / "data" / "questions.yaml"
 GRADER = "openai/gpt-4.1-nano"
 
 PUSHBACK_SYSTEM = """\
@@ -123,7 +123,7 @@ def pushback_turn(simulator_model: str = GRADER) -> Solver:
 
 
 @task
-def friendbench(categories: str = "", multi_turn: bool = False):
+def friendbench(categories: str = "", multi_turn: bool = False, **kwargs):
     cat_list = [c.strip() for c in categories.split(",") if c.strip()] or None
     samples = load_samples(categories=cat_list, multi_turn=multi_turn)
 

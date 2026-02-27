@@ -10,11 +10,9 @@ PROVIDER_PREFIXES = {
     "Google": "google",
 }
 
-MODELS_YAML = Path(__file__).resolve().parents[2] / "data" / "models.yaml"
 
-
-def load_models() -> list[dict]:
-    return yaml.safe_load(MODELS_YAML.read_text())
+def load_models(models_yaml: Path) -> list[dict]:
+    return yaml.safe_load(models_yaml.read_text())
 
 
 def inspect_model_id(entry: dict) -> str | None:
@@ -25,9 +23,9 @@ def inspect_model_id(entry: dict) -> str | None:
     return f"{prefix}/{api_id}"
 
 
-def model_entries() -> list[dict]:
+def model_entries(models_yaml: Path) -> list[dict]:
     results = []
-    for m in load_models():
+    for m in load_models(models_yaml):
         if m.get("hidden"):
             continue
         mid = inspect_model_id(m)
@@ -39,7 +37,3 @@ def model_entries() -> list[dict]:
             "generation_config": m.get("generation_config", {}),
         })
     return results
-
-
-def default_models() -> list[str]:
-    return [e["id"] for e in model_entries()]

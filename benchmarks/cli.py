@@ -4,25 +4,33 @@ from pathlib import Path
 
 import click
 
-TASKS_FILE = Path(__file__).parent / "tasks.py"
+BENCHMARKS_DIR = Path(__file__).resolve().parent
+
+
+def resolve_benchmark(name: str) -> Path:
+    bench_dir = BENCHMARKS_DIR / name
+    if not bench_dir.is_dir():
+        raise click.ClickException(f"Unknown benchmark: {name}")
+    return bench_dir
 
 
 @click.group()
-def fb():
+def bench():
     pass
 
 
-@fb.group("eval")
+@bench.group("eval")
 def eval_group():
     pass
 
 
 @eval_group.command()
+@click.option("--benchmark", "-b", required=True, help="Benchmark name (e.g. friendbench, pressbench)")
 @click.option("--models", multiple=True)
 @click.option("--epochs", default=1, type=int)
 @click.option("--log-dir", default="./logs")
-@click.option("--category", multiple=True, help="Filter by category (e.g. sycophancy, relationship)")
-@click.option("--multi-turn", is_flag=True, help="Run only multi-turn pressure questions")
+@click.option("--category", multiple=True, help="Filter by category (friendbench)")
+@click.option("--multi-turn", is_flag=True, help="Run only multi-turn pressure questions (friendbench)")
 @click.option("--no-thinking", is_flag=True, help="Skip thinking variants")
 @click.option("--thinking-only", is_flag=True, help="Run only thinking variants")
 @click.option("--exclude", multiple=True, help="Exclude models whose name contains this string")
@@ -34,12 +42,16 @@ def eval_group():
 @click.option("--max-retries", default=None, type=int, help="Max retries for model API requests")
 @click.option("--cache", is_flag=False, flag_value="true", default=None, help="Cache model generations (optionally specify duration e.g. 7D)")
 def run(
-    models, epochs, log_dir, category, multi_turn, no_thinking, thinking_only,
-    exclude, max_connections, batch, fail_on_error, no_fail_on_error, limit,
-    max_retries, cache,
+    benchmark, models, epochs, log_dir, category, multi_turn, no_thinking,
+    thinking_only, exclude, max_connections, batch, fail_on_error,
+    no_fail_on_error, limit, max_retries, cache,
 ):
     from inspect_ai import eval as inspect_eval
     from .models import model_entries
+
+    bench_dir = resolve_benchmark(benchmark)
+    tasks_file = bench_dir / "tasks.py"
+    models_yaml = bench_dir / "data" / "models.yaml"
 
     task_args = {}
     if category:
@@ -56,9 +68,11 @@ def run(
         "cache": True if cache == "true" else cache,
     }.items() if v is not None}
 
+    task_ref = f"{tasks_file}@{benchmark}"
+
     if models:
         logs = inspect_eval(
-            f"{TASKS_FILE}@friendbench",
+            task_ref,
             model=list(models),
             epochs=epochs,
             log_dir=log_dir,
@@ -66,7 +80,7 @@ def run(
             **inspect_args,
         )
     else:
-        entries = model_entries()
+        entries = model_entries(models_yaml)
 
         if no_thinking:
             entries = [e for e in entries if not e["generation_config"]]
@@ -90,7 +104,7 @@ def run(
             names = [e["name"] for e in group]
             click.echo(f"\n  Running: {', '.join(names)}\n")
             result = inspect_eval(
-                f"{TASKS_FILE}@friendbench",
+                task_ref,
                 model=model_ids,
                 epochs=epochs,
                 log_dir=log_dir,
@@ -100,7 +114,7 @@ def run(
             )
             logs.extend(result)
 
-    entries = model_entries() if not models else []
+    entries = model_entries(models_yaml) if not models else []
     name_lookup = {}
     for e in entries:
         gc = e["generation_config"]
@@ -120,8 +134,14 @@ def run(
         )
         display = name_lookup.get((model_id, thinking), model_id)
         if log.status == "success" and log.results:
-            acc = log.results.scores[0].metrics["accuracy"].value
-            rows.append((display, f"{acc:.0%}"))
+            score = log.results.scores[0].metrics
+            if "accuracy" in score:
+                val = f"{score['accuracy'].value:.0%}"
+            elif "mean" in score:
+                val = f"{score['mean'].value:.1f}"
+            else:
+                val = str(next(iter(score.values())).value)
+            rows.append((display, val))
         else:
             rows.append((display, log.status.upper()))
 
@@ -136,10 +156,14 @@ def run(
 
 
 @eval_group.command("list-models")
-def list_models():
+@click.option("--benchmark", "-b", required=True, help="Benchmark name")
+def list_models(benchmark):
     from .models import model_entries
 
-    for entry in model_entries():
+    bench_dir = resolve_benchmark(benchmark)
+    models_yaml = bench_dir / "data" / "models.yaml"
+
+    for entry in model_entries(models_yaml):
         config = entry["generation_config"]
         config_str = f"  {config}" if config else ""
         click.echo(f"{entry['name']:30s} {entry['id']}{config_str}")

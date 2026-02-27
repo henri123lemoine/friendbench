@@ -2,4 +2,8 @@ node_modules/
 __pycache__/
 .netlify
 .env
-evals/logs/
+logs/
+.venv/
+*.egg-info/
+.ruff_cache/
+uv.lock
