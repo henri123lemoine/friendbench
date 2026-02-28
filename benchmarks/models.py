@@ -48,6 +48,7 @@ def resolve_models(models_yaml: Path) -> list[dict]:
         config = GenerateConfig(**gen_config) if gen_config else GenerateConfig()
         model = get_model(entry["id"], config=config)
         results.append({
+            "id": entry["id"],
             "name": entry["name"],
             "model": model,
         })

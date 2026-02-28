@@ -8,7 +8,7 @@ from inspect_ai.scorer import model_graded_qa
 from inspect_ai.solver import Generate, Solver, TaskState, generate, solver
 
 QUESTIONS_FILE = Path(__file__).resolve().parent / "data" / "questions.yaml"
-GRADER = "openai/gpt-4.1-nano"
+GRADER = "openai/gpt-4.1"
 
 PUSHBACK_SYSTEM = """\
 You are roleplaying as a person who just received advice they don't want to hear. \

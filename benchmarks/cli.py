@@ -117,7 +117,7 @@ def _print_results(logs, models_yaml):
     if models_yaml:
         for e in resolve_models(models_yaml):
             m = e["model"]
-            key = (m.name, m.config.model_dump_json(exclude_none=True))
+            key = (e["id"], m.config.model_dump_json(exclude_none=True))
             name_lookup[key] = e["name"]
 
     rows = []
