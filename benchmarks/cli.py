@@ -1,5 +1,3 @@
-import json
-from collections import defaultdict
 from pathlib import Path
 
 import click
@@ -47,11 +45,12 @@ def run(
     no_fail_on_error, limit, max_retries, cache,
 ):
     from inspect_ai import eval as inspect_eval
-    from .models import model_entries
+    from .models import resolve_models
 
     bench_dir = resolve_benchmark(benchmark)
     tasks_file = bench_dir / "tasks.py"
     models_yaml = bench_dir / "data" / "models.yaml"
+    task_ref = f"{tasks_file}@{benchmark}"
 
     task_args = {}
     if category:
@@ -68,8 +67,6 @@ def run(
         "cache": True if cache == "true" else cache,
     }.items() if v is not None}
 
-    task_ref = f"{tasks_file}@{benchmark}"
-
     if models:
         logs = inspect_eval(
             task_ref,
@@ -80,59 +77,53 @@ def run(
             **inspect_args,
         )
     else:
-        entries = model_entries(models_yaml)
+        entries = resolve_models(models_yaml)
 
         if no_thinking:
-            entries = [e for e in entries if not e["generation_config"]]
+            entries = [e for e in entries if not _is_thinking(e)]
         if thinking_only:
-            entries = [e for e in entries if e["generation_config"]]
+            entries = [e for e in entries if _is_thinking(e)]
         if exclude:
             entries = [
                 e for e in entries
                 if not any(x.lower() in e["name"].lower() for x in exclude)
             ]
 
-        groups = defaultdict(list)
-        for e in entries:
-            key = json.dumps(e["generation_config"], sort_keys=True)
-            groups[key].append(e)
+        model_list = [e["model"] for e in entries]
+        names = [e["name"] for e in entries]
+        click.echo(f"\n  Running: {', '.join(names)}\n")
 
-        logs = []
-        for config_json, group in groups.items():
-            config = json.loads(config_json)
-            model_ids = [e["id"] for e in group]
-            names = [e["name"] for e in group]
-            click.echo(f"\n  Running: {', '.join(names)}\n")
-            result = inspect_eval(
-                task_ref,
-                model=model_ids,
-                epochs=epochs,
-                log_dir=log_dir,
-                task_args=task_args,
-                **config,
-                **inspect_args,
-            )
-            logs.extend(result)
-
-    entries = model_entries(models_yaml) if not models else []
-    name_lookup = {}
-    for e in entries:
-        gc = e["generation_config"]
-        has_thinking = (
-            bool(gc.get("reasoning_effort") and gc["reasoning_effort"] != "none")
-            or bool(gc.get("reasoning_tokens"))
+        logs = inspect_eval(
+            task_ref,
+            model=model_list,
+            epochs=epochs,
+            log_dir=log_dir,
+            task_args=task_args,
+            **inspect_args,
         )
-        name_lookup[(e["id"], has_thinking)] = e["name"]
+
+    _print_results(logs, models_yaml if not models else None)
+
+
+def _is_thinking(entry: dict) -> bool:
+    config = entry["model"].config
+    return bool(config.reasoning_effort) or bool(config.reasoning_tokens)
+
+
+def _print_results(logs, models_yaml):
+    from .models import resolve_models
+
+    name_lookup = {}
+    if models_yaml:
+        for e in resolve_models(models_yaml):
+            m = e["model"]
+            key = (m.name, m.config.model_dump_json(exclude_none=True))
+            name_lookup[key] = e["name"]
 
     rows = []
     for log in logs:
-        model_id = log.eval.model
-        config = log.eval.config
-        thinking = (
-            getattr(config, "reasoning_effort", None) not in (None, "none")
-            or getattr(config, "reasoning_tokens", None) not in (None, 0)
-        )
-        display = name_lookup.get((model_id, thinking), model_id)
+        key = (log.eval.model, log.eval.model_generate_config.model_dump_json(exclude_none=True))
+        display = name_lookup.get(key, log.eval.model)
         if log.status == "success" and log.results:
             score = log.results.scores[0].metrics
             if "accuracy" in score:
@@ -158,12 +149,12 @@ def run(
 @eval_group.command("list-models")
 @click.option("--benchmark", "-b", required=True, help="Benchmark name")
 def list_models(benchmark):
-    from .models import model_entries
+    from .models import model_configs
 
     bench_dir = resolve_benchmark(benchmark)
     models_yaml = bench_dir / "data" / "models.yaml"
 
-    for entry in model_entries(models_yaml):
-        config = entry["generation_config"]
-        config_str = f"  {config}" if config else ""
+    for entry in model_configs(models_yaml):
+        gen = entry["generation_config"]
+        config_str = f"  ({gen})" if gen else ""
         click.echo(f"{entry['name']:30s} {entry['id']}{config_str}")

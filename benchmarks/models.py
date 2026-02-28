@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import yaml
+from inspect_ai.model import GenerateConfig, get_model
 
 PROVIDER_PREFIXES = {
     "Anthropic": "anthropic",
@@ -23,17 +24,31 @@ def inspect_model_id(entry: dict) -> str | None:
     return f"{prefix}/{api_id}"
 
 
-def model_entries(models_yaml: Path) -> list[dict]:
+def model_configs(models_yaml: Path) -> list[dict]:
     results = []
     for m in load_models(models_yaml):
         if m.get("hidden"):
             continue
-        mid = inspect_model_id(m)
-        if not mid:
+        model_id = inspect_model_id(m)
+        if not model_id:
             continue
+        gen_config = m.get("generation_config", {})
         results.append({
-            "id": mid,
+            "id": model_id,
             "name": m["name"],
-            "generation_config": m.get("generation_config", {}),
+            "generation_config": gen_config,
+        })
+    return results
+
+
+def resolve_models(models_yaml: Path) -> list[dict]:
+    results = []
+    for entry in model_configs(models_yaml):
+        gen_config = entry["generation_config"]
+        config = GenerateConfig(**gen_config) if gen_config else GenerateConfig()
+        model = get_model(entry["id"], config=config)
+        results.append({
+            "name": entry["name"],
+            "model": model,
         })
     return results
