@@ -1,60 +1,49 @@
 - name: Gemini 2.0 Flash Experimental
-  provider: Google
-  api_id: gemini-2.0-flash
+  id: google/gemini-2.0-flash
   score: 500
 
 - name: GPT-4o
-  provider: OpenAI
-  api_id: gpt-4o
+  id: openai/gpt-4o
   score: 315
 
 - name: Gemini 2.0 Flash-lite
-  provider: Google
-  api_id: gemini-2.0-flash-lite
+  id: google/gemini-2.0-flash-lite
   score: 315
 
 - name: Llama 3.1 (405B)
-  provider: OpenAI
-  api_id: meta-llama/llama-3.1-405b
+  id: openrouter/meta-llama/llama-3.1-405b
   score: 315
   hidden: true
 
 - name: o3-mini (high)
-  provider: OpenAI
-  api_id: o3-mini
+  id: openai/o3-mini
   score: 300
 
 - name: Grok 3 (thinking)
-  provider: xAI
-  api_id: grok-3
+  id: grok/grok-3
   score: 225
   generation_config:
     reasoning_effort: high
 
 - name: GPT-4.5
-  provider: OpenAI
-  api_id: gpt-4.5-preview
+  id: openai/gpt-4.5-preview
   score: 225
   hidden: true
 
 - name: Deepseek R1
-  provider: DeepSeek
-  api_id: deepseek-reasoner
+  id: deepseek/deepseek-reasoner
   score: 225
 
 - name: Sonnet 3.7 (thinking)
-  provider: Anthropic
-  api_id: claude-3-7-sonnet-20250219
+  id: anthropic/claude-3-7-sonnet-20250219
   score: 185
   generation_config:
     reasoning_tokens: 16000
 
 - name: Sonnet 3.6
-  provider: Anthropic
-  api_id: claude-3-5-sonnet-20241022
+  id: anthropic/claude-3-5-sonnet-20241022
   score: 165
 
 - name: Sonnet 3.7
-  provider: Anthropic
-  api_id: claude-3-7-sonnet-20250219
+  id: anthropic/claude-3-7-sonnet-20250219
   score: 135
