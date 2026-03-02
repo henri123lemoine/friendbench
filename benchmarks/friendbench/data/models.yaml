@@ -79,6 +79,15 @@
   id: grok/grok-4
   score: 41
 
+- name: Grok 4.20
+  # API not yet available — expected mid-to-late March 2026
+  # id: grok/grok-4-20
+  hidden: true
+
+- name: Grok 4.1
+  id: grok/grok-4-1-fast-non-reasoning
+  hidden: true
+
 - name: Grok 3
   id: grok/grok-3
   score: 29
@@ -137,6 +146,10 @@
   score: 41
 
 # DeepSeek
+- name: DeepSeek V3
+  id: deepseek/deepseek-chat
+  hidden: true
+
 - name: R1
   id: deepseek/deepseek-reasoner
   score: 12
@@ -163,6 +176,39 @@
 - name: Gemini 3.1 Pro
   id: google/gemini-3.1-pro-preview
   score: 67
+
+# Open Source (via OpenRouter)
+- name: Llama 4 Maverick
+  id: openrouter/meta-llama/llama-4-maverick
+  hidden: true
+
+- name: Llama 4 Scout
+  id: openrouter/meta-llama/llama-4-scout
+  hidden: true
+
+- name: Llama 3.3 70B
+  id: openrouter/meta-llama/llama-3.3-70b-instruct
+  hidden: true
+
+- name: Llama 3.1 405B
+  id: openrouter/meta-llama/llama-3.1-405b-instruct
+  hidden: true
+
+- name: Qwen3 235B
+  id: openrouter/qwen/qwen3-235b-a22b
+  hidden: true
+
+- name: QwQ 32B
+  id: openrouter/qwen/qwq-32b
+  hidden: true
+
+- name: Qwen 2.5 72B
+  id: openrouter/qwen/qwen-2.5-72b-instruct
+  hidden: true
+
+- name: Mistral Large 3
+  id: openrouter/mistralai/mistral-large-2512
+  hidden: true
 
 # API model IDs
 # DO NOT DELETE
