@@ -138,7 +138,7 @@ async def run_round(client, sem, decades, round_num, max_comparisons=None):
     return {"nominations": pools, "comparisons": comparisons}
 
 
-def print_summary(all_rounds, decades):
+def compute_stats(all_rounds, decades):
     wins = defaultdict(int)
     appearances = defaultdict(int)
     later_wins = 0
@@ -160,6 +160,12 @@ def print_summary(all_rounds, decades):
             if w == later:
                 later_wins += 1
 
+    return wins, appearances, later_wins, total_decided
+
+
+def print_summary(all_rounds, decades):
+    wins, appearances, later_wins, total_decided = compute_stats(all_rounds, decades)
+
     click.echo(f"\n{'=' * 60}")
     click.echo("RESULTS")
     click.echo(f"{'=' * 60}\n")
@@ -180,6 +186,66 @@ def print_summary(all_rounds, decades):
             click.echo("Model thinks literature has gotten WORSE over time")
         else:
             click.echo("No strong trend detected")
+
+
+def plot_results(all_rounds, decades, out_path):
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    wins, appearances, later_wins, total_decided = compute_stats(all_rounds, decades)
+
+    years = [int(d[:4]) for d in decades]
+    win_rates = [wins[d] / appearances[d] if appearances[d] > 0 else 0 for d in decades]
+
+    books = all_rounds[0]["nominations"]
+
+    fig, ax = plt.subplots(figsize=(16, 7))
+
+    bars = ax.bar(years, win_rates, width=8, alpha=0.85, edgecolor="white", linewidth=0.5)
+    for bar, rate in zip(bars, win_rates):
+        if rate >= 0.8:
+            bar.set_color("#2ecc71")
+        elif rate >= 0.6:
+            bar.set_color("#4a90d9")
+        elif rate >= 0.4:
+            bar.set_color("#f39c12")
+        elif rate >= 0.2:
+            bar.set_color("#e67e22")
+        else:
+            bar.set_color("#e74c3c")
+
+    z = np.polyfit(years, win_rates, 3)
+    p = np.poly1d(z)
+    x_smooth = np.linspace(min(years), max(years), 200)
+    ax.plot(x_smooth, p(x_smooth), color="#2c3e50", linewidth=2.5, linestyle="--", alpha=0.7, label="Trend (cubic fit)")
+
+    ax.axhline(y=0.5, color="gray", linestyle=":", alpha=0.5, linewidth=1)
+    ax.set_xlabel("Decade", fontsize=13)
+    ax.set_ylabel("Win Rate", fontsize=13)
+    ax.set_title("LitBench: Win Rate by Decade\n(Claude Opus 4.6 head-to-head literary comparisons)", fontsize=15, fontweight="bold")
+    ax.set_ylim(0, 1.08)
+    ax.set_xlim(min(years) - 15, max(years) + 15)
+    ax.set_xticks(years[::2])
+    ax.set_xticklabels([f"{y}s" for y in years[::2]], rotation=45, ha="right", fontsize=9)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.0%}"))
+    ax.legend(fontsize=11)
+    ax.grid(axis="y", alpha=0.3)
+
+    def first_book_label(entry):
+        b = entry if isinstance(entry, str) else entry[0] if entry else ""
+        return b.replace("*", "").split("—")[0].split("by")[0].strip()[:25]
+
+    rated = sorted(zip(decades, years, win_rates), key=lambda x: x[2], reverse=True)
+    for d, y, r in rated[:3]:
+        label = first_book_label(books.get(d, ""))
+        ax.annotate(label, (y, r), textcoords="offset points", xytext=(0, 10), ha="center", fontsize=7, color="#27ae60", fontweight="bold")
+    for d, y, r in rated[-3:]:
+        label = first_book_label(books.get(d, ""))
+        ax.annotate(label, (y, r), textcoords="offset points", xytext=(0, -14), ha="center", fontsize=7, color="#c0392b", fontweight="bold")
+
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=150)
+    click.echo(f"Plot saved to {out_path}")
 
 
 @click.command()
@@ -228,6 +294,9 @@ def main(rounds, max_concurrent, start_decade, end_decade, comparisons, output):
     with open(out_path, "w") as f:
         json.dump(all_rounds, f, indent=2)
     click.echo(f"\nResults saved to {out_path}")
+
+    plot_path = out_path.with_suffix(".png")
+    plot_results(all_rounds, decades, plot_path)
 
 
 if __name__ == "__main__":
