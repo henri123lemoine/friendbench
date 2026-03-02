@@ -233,3 +233,81 @@ def list_models(benchmark):
         gen = entry["generation_config"]
         config_str = f"  ({gen})" if gen else ""
         click.echo(f"{entry['name']:30s} {entry['id']}{config_str}")
+
+
+@eval_group.command("update-scores")
+@click.option("--benchmark", "-b", required=True, help="Benchmark name")
+@click.option("--log-dir", default="./logs")
+@click.option("--dry-run", is_flag=True, help="Print changes without writing")
+def update_scores(benchmark, log_dir, dry_run):
+    import yaml
+    from inspect_ai.log import list_eval_logs, read_eval_log
+
+    from .models import load_scores, resolve_models
+
+    bench_dir = resolve_benchmark(benchmark)
+    models_yaml = bench_dir / "data" / "models.yaml"
+    data_dir = bench_dir / "data"
+
+    name_lookup = {}
+    for e in resolve_models(models_yaml):
+        m = e["model"]
+        key = (e["id"], m.config.model_dump_json(exclude_none=True))
+        name_lookup[key] = e["name"]
+
+    logs = list_eval_logs(log_dir)
+    latest = {}
+    for header in logs:
+        log = read_eval_log(header.name)
+        if log.eval.task != benchmark:
+            continue
+        if log.status != "success" or not log.results:
+            continue
+
+        key = (
+            log.eval.model,
+            log.eval.model_generate_config.model_dump_json(exclude_none=True),
+        )
+        name = name_lookup.get(key)
+        if not name:
+            continue
+
+        ts = log.eval.created
+        if name in latest and latest[name][0] >= ts:
+            continue
+
+        score_metrics = log.results.scores[0].metrics
+        if "accuracy" in score_metrics:
+            val = round(score_metrics["accuracy"].value * 100)
+        elif "mean" in score_metrics:
+            val = round(score_metrics["mean"].value, 1)
+        else:
+            val = round(next(iter(score_metrics.values())).value, 2)
+
+        latest[name] = (ts, val)
+
+    existing = load_scores(data_dir)
+    new_scores = {**existing, **{name: val for name, (_, val) in latest.items()}}
+    new_scores = dict(sorted(new_scores.items()))
+
+    changes = []
+    for name in sorted(set(list(existing.keys()) + list(new_scores.keys()))):
+        old = existing.get(name)
+        new = new_scores.get(name)
+        if old != new:
+            changes.append((name, old, new))
+
+    if not changes:
+        click.echo("No score changes.")
+        return
+
+    for name, old, new in changes:
+        old_str = str(old) if old is not None else "—"
+        click.echo(f"  {name}: {old_str} → {new}")
+
+    if dry_run:
+        click.echo(f"\n  [dry-run] {len(changes)} change(s), not written.")
+    else:
+        scores_path = data_dir / "scores.yaml"
+        scores_path.write_text(yaml.dump(new_scores, default_flow_style=False, allow_unicode=True))
+        click.echo(f"\n  Updated {scores_path} ({len(changes)} change(s))")

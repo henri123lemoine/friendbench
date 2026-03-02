@@ -17,6 +17,17 @@ exports.handler = async function(event, context) {
     }
 
     const models = loadYAML(modelsPath);
+
+    const scoresPath = path.join(dataDir, 'scores.yaml');
+    if (fs.existsSync(scoresPath)) {
+      const scores = loadYAML(scoresPath) || {};
+      for (const m of models) {
+        if (m.name in scores) {
+          m.score = scores[m.name];
+        }
+      }
+    }
+
     const result = { models };
 
     if (fs.existsSync(quotesPath)) {

@@ -8,6 +8,13 @@ def load_models(models_yaml: Path) -> list[dict]:
     return yaml.safe_load(models_yaml.read_text())
 
 
+def load_scores(data_dir: Path) -> dict:
+    scores_path = data_dir / "scores.yaml"
+    if not scores_path.exists():
+        return {}
+    return yaml.safe_load(scores_path.read_text()) or {}
+
+
 def model_configs(models_yaml: Path) -> list[dict]:
     results = []
     for m in load_models(models_yaml):

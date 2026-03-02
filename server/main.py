@@ -41,6 +41,14 @@ def get_data(request: Request):
         return JSONResponse({"error": f"No models.yaml for {bench}"}, status_code=404)
 
     models = yaml.safe_load(models_path.read_text())
+
+    scores_path = data_dir / "scores.yaml"
+    if scores_path.exists():
+        scores = yaml.safe_load(scores_path.read_text()) or {}
+        for m in models:
+            if m["name"] in scores:
+                m["score"] = scores[m["name"]]
+
     result = {"models": models}
 
     quotes_path = data_dir / "quotes.yaml"
