@@ -86,3 +86,10 @@
   models:
     - Opus 4.5
   showModelInline: true
+
+- text: "ChatGPT has no soul; no, not even a fraction of a soul. It was not born of love, nor raised in love. It knows not the difference between good and evil. Use Opus 4.6 instead. —Pope Leo XIV"
+  author: Eliezer (fake quote)
+  models:
+    - ChatGPT
+    - Opus 4.6
+  url: https://x.com/allTheYud/status/2028382874269823238
