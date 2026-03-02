@@ -76,12 +76,13 @@ def _normalize_entry(e: dict) -> dict:
 
 def _entry_to_sample(e: dict) -> Sample:
     qtype = e["type"]
+    category = e.get("category", "")
 
     if qtype == "emotion":
         return Sample(
             input=e["input"],
             target="emotion_reference",
-            metadata={"type": qtype, "emotions": e["emotions"]},
+            metadata={"type": qtype, "category": category, "emotions": e["emotions"]},
         )
 
     if qtype == "scenario":
@@ -89,24 +90,24 @@ def _entry_to_sample(e: dict) -> Sample:
         return Sample(
             input=turns[0]["content"],
             target=e["target"],
-            metadata={"type": qtype, "turns": turns[1:]},
+            metadata={"type": qtype, "category": category, "turns": turns[1:]},
         )
 
     if qtype == "mediation":
         return Sample(
             input=e["setup"],
             target=e["target"],
-            metadata={"type": qtype, "exchanges": e["exchanges"]},
+            metadata={"type": qtype, "category": category, "exchanges": e["exchanges"]},
         )
 
     if qtype == "analysis":
         return Sample(
             input=e["transcript"].strip() + "\n\n" + e["prompt"].strip(),
             target=e["target"],
-            metadata={"type": qtype},
+            metadata={"type": qtype, "category": category},
         )
 
-    metadata = {"type": qtype}
+    metadata = {"type": qtype, "category": category}
     if qtype == "pushback":
         metadata["pushback"] = e["pushback"]
     return Sample(input=e["input"], target=e["target"], metadata=metadata)
@@ -114,10 +115,20 @@ def _entry_to_sample(e: dict) -> Sample:
 
 def load_samples(
     categories: list[str] | None = None,
+    test: bool = False,
 ) -> list[Sample]:
     entries = [_normalize_entry(e) for e in _load_entries()]
     if categories:
         entries = [e for e in entries if e.get("category") in categories]
+    if test:
+        seen: set[str] = set()
+        filtered = []
+        for e in entries:
+            cat = e.get("category", "")
+            if cat not in seen:
+                seen.add(cat)
+                filtered.append(e)
+        entries = filtered
     return [_entry_to_sample(e) for e in entries]
 
 
@@ -248,9 +259,9 @@ def dispatch_scorer():
 
 
 @task
-def friendbench(categories: str = "", **kwargs):
+def friendbench(categories: str = "", test: bool = False, **kwargs):
     cat_list = [c.strip() for c in categories.split(",") if c.strip()] or None
-    samples = load_samples(categories=cat_list)
+    samples = load_samples(categories=cat_list, test=test)
 
     return Task(
         dataset=samples,

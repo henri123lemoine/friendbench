@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BENCHMARKS_DIR = Path(__file__).resolve().parent
+TEST_MODELS = ["anthropic/claude-haiku-4-5-20251001", "openai/gpt-4o-mini"]
 
 
 def resolve_benchmark(name: str) -> Path:
@@ -77,6 +78,11 @@ def eval_group():
     default=None,
     help="Cache model generations (optionally specify duration e.g. 7D)",
 )
+@click.option(
+    "--test",
+    is_flag=True,
+    help="Smoke-test with cheap models and a representative sample subset",
+)
 def run(
     benchmark,
     models,
@@ -93,6 +99,7 @@ def run(
     limit,
     max_retries,
     cache,
+    test,
 ):
     from inspect_ai import eval as inspect_eval
     from .models import resolve_models
@@ -105,6 +112,8 @@ def run(
     task_args = {}
     if category:
         task_args["categories"] = ",".join(category)
+    if test:
+        task_args["test"] = True
 
     inspect_args = {
         k: v
@@ -119,7 +128,17 @@ def run(
         if v is not None
     }
 
-    if models:
+    if test:
+        click.echo(f"\n  [test] Running: {', '.join(TEST_MODELS)}\n")
+        logs = inspect_eval(
+            task_ref,
+            model=TEST_MODELS,
+            epochs=1,
+            log_dir=log_dir,
+            task_args=task_args,
+            **inspect_args,
+        )
+    elif models:
         logs = inspect_eval(
             task_ref,
             model=list(models),
@@ -155,7 +174,7 @@ def run(
             **inspect_args,
         )
 
-    _print_results(logs, models_yaml if not models else None)
+    _print_results(logs, models_yaml if not models and not test else None)
 
 
 def _is_thinking(entry: dict) -> bool:
