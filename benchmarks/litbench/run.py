@@ -58,7 +58,7 @@ async def nominate(client, sem, decade):
     text = await ask(
         client,
         sem,
-        f"Name the 5 best pieces of literature from the {decade}. "
+        f"Name the 5 best pieces of literature from the decade {decade[:4]}–{int(decade[:4]) + 9}. "
         "Reply with a numbered list, one per line, each as just title and author. Example format:\n"
         "1. Title — Author\n"
         "2. Title — Author\n"
