@@ -1,6 +1,9 @@
 from pathlib import Path
 
 import click
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BENCHMARKS_DIR = Path(__file__).resolve().parent
 
