@@ -31,7 +31,7 @@
   hidden: true
 
 - name: Deepseek R1
-  id: deepseek/deepseek-reasoner
+  id: openai-api/deepseek/deepseek-reasoner
   score: 225
 
 - name: Sonnet 3.7 (thinking)

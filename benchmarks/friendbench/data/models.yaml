@@ -147,15 +147,15 @@
 
 # DeepSeek
 - name: DeepSeek V3
-  id: deepseek/deepseek-chat
+  id: openai-api/deepseek/deepseek-chat
   hidden: true
 
 - name: R1
-  id: deepseek/deepseek-reasoner
+  id: openai-api/deepseek/deepseek-reasoner
   score: 12
 
 - name: R1 (new)
-  id: deepseek/deepseek-reasoner
+  id: openai-api/deepseek/deepseek-reasoner
   score: 30
   hidden: true
 
