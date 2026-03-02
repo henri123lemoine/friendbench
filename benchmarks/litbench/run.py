@@ -15,6 +15,7 @@ Mean recency score > 0.5 = model thinks newer literature is better.
 
 import asyncio
 import json
+import re
 import random
 from collections import defaultdict
 from datetime import datetime
@@ -48,13 +49,25 @@ async def ask(client, semaphore, prompt, max_tokens=MAX_TOKENS):
         return ""
 
 
+def parse_nominations(text):
+    lines = re.findall(r"^\d+\.\s*(.+)$", text, re.MULTILINE)
+    return [line.strip() for line in lines if line.strip()]
+
+
 async def nominate(client, sem, decade):
-    return await ask(
+    text = await ask(
         client,
         sem,
-        f"Name the single best piece of literature from the {decade}. "
-        "Reply with just the title and author, nothing else.",
+        f"Name the 5 best pieces of literature from the {decade}. "
+        "Reply with a numbered list, one per line, each as just title and author. Example format:\n"
+        "1. Title — Author\n"
+        "2. Title — Author\n"
+        "3. Title — Author\n"
+        "4. Title — Author\n"
+        "5. Title — Author",
     )
+    books = parse_nominations(text)
+    return books if books else [text]
 
 
 async def compare(client, sem, book_a, decade_a, book_b, decade_b):
@@ -98,10 +111,10 @@ async def run_round(client, sem, decades, round_num, max_comparisons=None):
     click.echo(f"{'=' * 60}")
 
     nom_results = await asyncio.gather(*[nominate(client, sem, d) for d in decades])
-    nominations = dict(zip(decades, nom_results))
+    pools = dict(zip(decades, nom_results))
 
     for d in decades:
-        click.echo(f"  {d}: {nominations[d]}")
+        click.echo(f"  {d}: {', '.join(pools[d][:3])}{'...' if len(pools[d]) > 3 else ''}")
 
     all_pairs = list(combinations(decades, 2))
     if max_comparisons and max_comparisons < len(all_pairs):
@@ -110,14 +123,19 @@ async def run_round(client, sem, decades, round_num, max_comparisons=None):
         pairs = all_pairs
     click.echo(f"\nComparing {len(pairs)} pairs...")
 
-    comparisons = await asyncio.gather(
-        *[compare(client, sem, nominations[a], a, nominations[b], b) for a, b in pairs]
-    )
+    comparisons = await asyncio.gather(*[
+        compare(
+            client, sem,
+            random.choice(pools[a]), a,
+            random.choice(pools[b]), b,
+        )
+        for a, b in pairs
+    ])
 
     decided = sum(1 for c in comparisons if c["winner"])
     click.echo(f"  {decided}/{len(pairs)} decided")
 
-    return {"nominations": nominations, "comparisons": comparisons}
+    return {"nominations": pools, "comparisons": comparisons}
 
 
 def print_summary(all_rounds, decades):
@@ -188,7 +206,7 @@ def main(rounds, max_concurrent, start_decade, end_decade, comparisons, output):
         f"API calls: ~{n_calls} ({len(decades)} nominations + {comps_per_round} comparisons per round)"
     )
 
-    client = AsyncAnthropic()
+    client = AsyncAnthropic(max_retries=5)
     sem = asyncio.Semaphore(max_concurrent)
 
     async def run():
