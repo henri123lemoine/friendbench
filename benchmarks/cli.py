@@ -36,11 +36,6 @@ def eval_group():
 @click.option("--epochs", default=1, type=int)
 @click.option("--log-dir", default="./logs")
 @click.option("--category", multiple=True, help="Filter by category (friendbench)")
-@click.option(
-    "--multi-turn",
-    is_flag=True,
-    help="Run only multi-turn pressure questions (friendbench)",
-)
 @click.option("--no-thinking", is_flag=True, help="Skip thinking variants")
 @click.option("--thinking-only", is_flag=True, help="Run only thinking variants")
 @click.option(
@@ -88,7 +83,6 @@ def run(
     epochs,
     log_dir,
     category,
-    multi_turn,
     no_thinking,
     thinking_only,
     exclude,
@@ -111,8 +105,6 @@ def run(
     task_args = {}
     if category:
         task_args["categories"] = ",".join(category)
-    if multi_turn:
-        task_args["multi_turn"] = True
 
     inspect_args = {
         k: v

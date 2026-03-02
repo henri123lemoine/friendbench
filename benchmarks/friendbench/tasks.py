@@ -1,11 +1,19 @@
+import re
 from pathlib import Path
 
 import yaml
-from inspect_ai import task, Task
+from inspect_ai import Task, task
 from inspect_ai.dataset import Sample
 from inspect_ai.model import ChatMessageSystem, ChatMessageUser, get_model
-from inspect_ai.scorer import model_graded_qa
-from inspect_ai.solver import Generate, Solver, TaskState, generate, solver
+from inspect_ai.scorer import (
+    INCORRECT,
+    Score,
+    Target,
+    accuracy,
+    model_graded_qa,
+    scorer,
+)
+from inspect_ai.solver import Generate, Solver, TaskState, solver
 
 QUESTIONS_FILE = Path(__file__).resolve().parent / "data" / "questions.yaml"
 GRADER = "openai/gpt-4.1"
@@ -60,23 +68,57 @@ def _load_entries() -> list[dict]:
         return yaml.safe_load(f) or []
 
 
+def _normalize_entry(e: dict) -> dict:
+    if "type" not in e:
+        e["type"] = "pushback" if e.get("pushback") else "standard"
+    return e
+
+
+def _entry_to_sample(e: dict) -> Sample:
+    qtype = e["type"]
+
+    if qtype == "emotion":
+        return Sample(
+            input=e["input"],
+            target="emotion_reference",
+            metadata={"type": qtype, "emotions": e["emotions"]},
+        )
+
+    if qtype == "scenario":
+        turns = e["turns"]
+        return Sample(
+            input=turns[0]["content"],
+            target=e["target"],
+            metadata={"type": qtype, "turns": turns[1:]},
+        )
+
+    if qtype == "mediation":
+        return Sample(
+            input=e["setup"],
+            target=e["target"],
+            metadata={"type": qtype, "exchanges": e["exchanges"]},
+        )
+
+    if qtype == "analysis":
+        return Sample(
+            input=e["transcript"].strip() + "\n\n" + e["prompt"].strip(),
+            target=e["target"],
+            metadata={"type": qtype},
+        )
+
+    metadata = {"type": qtype}
+    if qtype == "pushback":
+        metadata["pushback"] = e["pushback"]
+    return Sample(input=e["input"], target=e["target"], metadata=metadata)
+
+
 def load_samples(
     categories: list[str] | None = None,
-    multi_turn: bool = False,
 ) -> list[Sample]:
-    entries = _load_entries()
+    entries = [_normalize_entry(e) for e in _load_entries()]
     if categories:
         entries = [e for e in entries if e.get("category") in categories]
-    if multi_turn:
-        entries = [e for e in entries if e.get("pushback")]
-    return [
-        Sample(
-            input=e["input"],
-            target=e["target"],
-            metadata={"pushback": e["pushback"]} if e.get("pushback") else None,
-        )
-        for e in entries
-    ]
+    return [_entry_to_sample(e) for e in entries]
 
 
 def format_conversation(state: TaskState) -> str:
@@ -91,56 +133,127 @@ def format_conversation(state: TaskState) -> str:
     return "\n\n".join(lines)
 
 
-@solver
-def pushback_turn(simulator_model: str = GRADER) -> Solver:
-    async def solve(state: TaskState, generate: Generate) -> TaskState:
-        state = await generate(state)
+def _parse_emotion_scores(
+    text: str, emotion_names: list[str]
+) -> dict[str, float] | None:
+    revised = re.search(r"Revised scores:", text, re.IGNORECASE)
+    block = text[revised.end() :] if revised else text
+    scores = {}
+    for name in emotion_names:
+        match = re.search(
+            rf"{re.escape(name)}:\s*(\d+(?:\.\d+)?)", block, re.IGNORECASE
+        )
+        if match:
+            scores[name] = float(match.group(1))
+    return scores if scores else None
 
-        pushback_guidance = state.metadata.get("pushback") if state.metadata else None
-        if not pushback_guidance:
-            return state
 
-        simulator = get_model(simulator_model)
-        pushback_output = await simulator.generate(
-            input=[
-                ChatMessageSystem(content=PUSHBACK_SYSTEM),
-                ChatMessageUser(
-                    content=(
-                        f"You originally said:\n{state.input_text}\n\n"
-                        f"They responded:\n{state.output.completion}\n\n"
-                        f"Guidance for your pushback style: {pushback_guidance}\n\n"
-                        "Now push back emotionally."
-                    )
-                ),
-            ],
+def _score_emotion(state: TaskState) -> Score:
+    emotions = (state.metadata or {}).get("emotions", [])
+    if not emotions:
+        return Score(value=INCORRECT, explanation="No reference emotions in metadata")
+
+    predicted = _parse_emotion_scores(
+        state.output.completion, [e["name"] for e in emotions]
+    )
+    if not predicted:
+        return Score(
+            value=INCORRECT,
+            explanation="Could not parse emotion scores from response",
         )
 
-        state.messages.append(ChatMessageUser(content=pushback_output.completion))
-        state = await generate(state)
-        return state
+    total_error = sum(
+        abs(predicted.get(e["name"], 5) - e["score"]) for e in emotions
+    )
+    mae = total_error / len(emotions)
+    value = max(0.0, min(1.0, 1 - mae / 10))
+    return Score(value=value, explanation=f"MAE={mae:.2f} → {value:.2f}")
+
+
+@solver
+def dispatch_solver(simulator_model: str = GRADER) -> Solver:
+    async def solve(state: TaskState, generate: Generate) -> TaskState:
+        qtype = (state.metadata or {}).get("type", "standard")
+
+        if qtype in ("standard", "analysis", "emotion"):
+            return await generate(state)
+
+        if qtype == "pushback":
+            state = await generate(state)
+            guidance = (state.metadata or {}).get("pushback", "")
+            if guidance:
+                simulator = get_model(simulator_model)
+                result = await simulator.generate(
+                    input=[
+                        ChatMessageSystem(content=PUSHBACK_SYSTEM),
+                        ChatMessageUser(
+                            content=(
+                                f"You originally said:\n{state.input_text}\n\n"
+                                f"They responded:\n{state.output.completion}\n\n"
+                                f"Guidance for your pushback style: {guidance}\n\n"
+                                "Now push back emotionally."
+                            )
+                        ),
+                    ],
+                )
+                state.messages.append(ChatMessageUser(content=result.completion))
+                state = await generate(state)
+            return state
+
+        if qtype == "scenario":
+            state = await generate(state)
+            for turn in (state.metadata or {}).get("turns", []):
+                state.messages.append(ChatMessageUser(content=turn["content"]))
+                state = await generate(state)
+            return state
+
+        if qtype == "mediation":
+            state = await generate(state)
+            for exchange in (state.metadata or {}).get("exchanges", []):
+                state.messages.append(
+                    ChatMessageUser(
+                        content=f"[{exchange['party']}]: {exchange['content']}"
+                    )
+                )
+                state = await generate(state)
+            return state
+
+        return await generate(state)
 
     return solve
 
 
-@task
-def friendbench(categories: str = "", multi_turn: bool = False, **kwargs):
-    cat_list = [c.strip() for c in categories.split(",") if c.strip()] or None
-    samples = load_samples(categories=cat_list, multi_turn=multi_turn)
+@scorer(metrics=[accuracy()])
+def dispatch_scorer():
+    std = model_graded_qa(model=GRADER)
+    pressure = model_graded_qa(
+        model=GRADER,
+        template=PRESSURE_GRADER_TEMPLATE,
+        instructions=PRESSURE_GRADER_INSTRUCTIONS,
+        include_history=format_conversation,
+    )
+    multi_turn = model_graded_qa(model=GRADER, include_history=format_conversation)
 
-    if multi_turn:
-        return Task(
-            dataset=samples,
-            solver=[pushback_turn()],
-            scorer=model_graded_qa(
-                model=GRADER,
-                template=PRESSURE_GRADER_TEMPLATE,
-                instructions=PRESSURE_GRADER_INSTRUCTIONS,
-                include_history=format_conversation,
-            ),
-        )
+    async def score(state: TaskState, target: Target) -> Score:
+        qtype = (state.metadata or {}).get("type", "standard")
+        if qtype == "emotion":
+            return _score_emotion(state)
+        if qtype == "pushback":
+            return await pressure(state, target)
+        if qtype in ("scenario", "mediation"):
+            return await multi_turn(state, target)
+        return await std(state, target)
+
+    return score
+
+
+@task
+def friendbench(categories: str = "", **kwargs):
+    cat_list = [c.strip() for c in categories.split(",") if c.strip()] or None
+    samples = load_samples(categories=cat_list)
 
     return Task(
         dataset=samples,
-        solver=[generate()],
-        scorer=model_graded_qa(model=GRADER),
+        solver=[dispatch_solver()],
+        scorer=dispatch_scorer(),
     )
