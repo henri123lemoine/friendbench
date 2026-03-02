@@ -23,26 +23,79 @@ def eval_group():
 
 
 @eval_group.command()
-@click.option("--benchmark", "-b", required=True, help="Benchmark name (e.g. friendbench, pressbench)")
+@click.option(
+    "--benchmark",
+    "-b",
+    required=True,
+    help="Benchmark name (e.g. friendbench, pressbench)",
+)
 @click.option("--models", multiple=True)
 @click.option("--epochs", default=1, type=int)
 @click.option("--log-dir", default="./logs")
 @click.option("--category", multiple=True, help="Filter by category (friendbench)")
-@click.option("--multi-turn", is_flag=True, help="Run only multi-turn pressure questions (friendbench)")
+@click.option(
+    "--multi-turn",
+    is_flag=True,
+    help="Run only multi-turn pressure questions (friendbench)",
+)
 @click.option("--no-thinking", is_flag=True, help="Skip thinking variants")
 @click.option("--thinking-only", is_flag=True, help="Run only thinking variants")
-@click.option("--exclude", multiple=True, help="Exclude models whose name contains this string")
-@click.option("--max-connections", default=None, type=int, help="Max concurrent API requests per model")
-@click.option("--batch", is_flag=True, help="Use provider batch APIs (50% cheaper, ~24h turnaround)")
-@click.option("--fail-on-error", default=None, type=float, help="Error threshold before failing (0-1 for proportion, >1 for count)")
-@click.option("--no-fail-on-error", is_flag=True, help="Continue running even if samples error")
-@click.option("--limit", default=None, type=str, help="Limit samples to evaluate (e.g. 10 or 10-20)")
-@click.option("--max-retries", default=None, type=int, help="Max retries for model API requests")
-@click.option("--cache", is_flag=False, flag_value="true", default=None, help="Cache model generations (optionally specify duration e.g. 7D)")
+@click.option(
+    "--exclude", multiple=True, help="Exclude models whose name contains this string"
+)
+@click.option(
+    "--max-connections",
+    default=None,
+    type=int,
+    help="Max concurrent API requests per model",
+)
+@click.option(
+    "--batch",
+    is_flag=True,
+    help="Use provider batch APIs (50% cheaper, ~24h turnaround)",
+)
+@click.option(
+    "--fail-on-error",
+    default=None,
+    type=float,
+    help="Error threshold before failing (0-1 for proportion, >1 for count)",
+)
+@click.option(
+    "--no-fail-on-error", is_flag=True, help="Continue running even if samples error"
+)
+@click.option(
+    "--limit",
+    default=None,
+    type=str,
+    help="Limit samples to evaluate (e.g. 10 or 10-20)",
+)
+@click.option(
+    "--max-retries", default=None, type=int, help="Max retries for model API requests"
+)
+@click.option(
+    "--cache",
+    is_flag=False,
+    flag_value="true",
+    default=None,
+    help="Cache model generations (optionally specify duration e.g. 7D)",
+)
 def run(
-    benchmark, models, epochs, log_dir, category, multi_turn, no_thinking,
-    thinking_only, exclude, max_connections, batch, fail_on_error,
-    no_fail_on_error, limit, max_retries, cache,
+    benchmark,
+    models,
+    epochs,
+    log_dir,
+    category,
+    multi_turn,
+    no_thinking,
+    thinking_only,
+    exclude,
+    max_connections,
+    batch,
+    fail_on_error,
+    no_fail_on_error,
+    limit,
+    max_retries,
+    cache,
 ):
     from inspect_ai import eval as inspect_eval
     from .models import resolve_models
@@ -58,14 +111,18 @@ def run(
     if multi_turn:
         task_args["multi_turn"] = True
 
-    inspect_args = {k: v for k, v in {
-        "max_connections": max_connections,
-        "batch": batch or None,
-        "fail_on_error": False if no_fail_on_error else fail_on_error,
-        "limit": int(limit) if limit and limit.isdigit() else limit,
-        "max_retries": max_retries,
-        "cache": True if cache == "true" else cache,
-    }.items() if v is not None}
+    inspect_args = {
+        k: v
+        for k, v in {
+            "max_connections": max_connections,
+            "batch": batch or None,
+            "fail_on_error": False if no_fail_on_error else fail_on_error,
+            "limit": int(limit) if limit and limit.isdigit() else limit,
+            "max_retries": max_retries,
+            "cache": True if cache == "true" else cache,
+        }.items()
+        if v is not None
+    }
 
     if models:
         logs = inspect_eval(
@@ -85,7 +142,8 @@ def run(
             entries = [e for e in entries if _is_thinking(e)]
         if exclude:
             entries = [
-                e for e in entries
+                e
+                for e in entries
                 if not any(x.lower() in e["name"].lower() for x in exclude)
             ]
 
@@ -122,7 +180,10 @@ def _print_results(logs, models_yaml):
 
     rows = []
     for log in logs:
-        key = (log.eval.model, log.eval.model_generate_config.model_dump_json(exclude_none=True))
+        key = (
+            log.eval.model,
+            log.eval.model_generate_config.model_dump_json(exclude_none=True),
+        )
         display = name_lookup.get(key, log.eval.model)
         if log.status == "success" and log.results:
             score = log.results.scores[0].metrics

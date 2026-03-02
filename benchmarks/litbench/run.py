@@ -114,7 +114,9 @@ async def run_round(client, sem, decades, round_num, max_comparisons=None):
     pools = dict(zip(decades, nom_results))
 
     for d in decades:
-        click.echo(f"  {d}: {', '.join(pools[d][:3])}{'...' if len(pools[d]) > 3 else ''}")
+        click.echo(
+            f"  {d}: {', '.join(pools[d][:3])}{'...' if len(pools[d]) > 3 else ''}"
+        )
 
     all_pairs = list(combinations(decades, 2))
     if max_comparisons and max_comparisons < len(all_pairs):
@@ -123,14 +125,19 @@ async def run_round(client, sem, decades, round_num, max_comparisons=None):
         pairs = all_pairs
     click.echo(f"\nComparing {len(pairs)} pairs...")
 
-    comparisons = await asyncio.gather(*[
-        compare(
-            client, sem,
-            random.choice(pools[a]), a,
-            random.choice(pools[b]), b,
-        )
-        for a, b in pairs
-    ])
+    comparisons = await asyncio.gather(
+        *[
+            compare(
+                client,
+                sem,
+                random.choice(pools[a]),
+                a,
+                random.choice(pools[b]),
+                b,
+            )
+            for a, b in pairs
+        ]
+    )
 
     decided = sum(1 for c in comparisons if c["winner"])
     click.echo(f"  {decided}/{len(pairs)} decided")
@@ -190,6 +197,7 @@ def print_summary(all_rounds, decades):
 
 def plot_results(all_rounds, decades, out_path):
     import matplotlib.pyplot as plt
+    from matplotlib.ticker import FuncFormatter
     import numpy as np
 
     wins, appearances, later_wins, total_decided = compute_stats(all_rounds, decades)
@@ -201,7 +209,9 @@ def plot_results(all_rounds, decades, out_path):
 
     fig, ax = plt.subplots(figsize=(16, 7))
 
-    bars = ax.bar(years, win_rates, width=8, alpha=0.85, edgecolor="white", linewidth=0.5)
+    bars = ax.bar(
+        years, win_rates, width=8, alpha=0.85, edgecolor="white", linewidth=0.5
+    )
     for bar, rate in zip(bars, win_rates):
         if rate >= 0.8:
             bar.set_color("#2ecc71")
@@ -217,17 +227,31 @@ def plot_results(all_rounds, decades, out_path):
     z = np.polyfit(years, win_rates, 3)
     p = np.poly1d(z)
     x_smooth = np.linspace(min(years), max(years), 200)
-    ax.plot(x_smooth, p(x_smooth), color="#2c3e50", linewidth=2.5, linestyle="--", alpha=0.7, label="Trend (cubic fit)")
+    ax.plot(
+        x_smooth,
+        p(x_smooth),
+        color="#2c3e50",
+        linewidth=2.5,
+        linestyle="--",
+        alpha=0.7,
+        label="Trend (cubic fit)",
+    )
 
     ax.axhline(y=0.5, color="gray", linestyle=":", alpha=0.5, linewidth=1)
     ax.set_xlabel("Decade", fontsize=13)
     ax.set_ylabel("Win Rate", fontsize=13)
-    ax.set_title("LitBench: Win Rate by Decade\n(Claude Opus 4.6 head-to-head literary comparisons)", fontsize=15, fontweight="bold")
+    ax.set_title(
+        "LitBench: Win Rate by Decade\n(Claude Opus 4.6 head-to-head literary comparisons)",
+        fontsize=15,
+        fontweight="bold",
+    )
     ax.set_ylim(0, 1.08)
     ax.set_xlim(min(years) - 15, max(years) + 15)
     ax.set_xticks(years[::2])
-    ax.set_xticklabels([f"{y}s" for y in years[::2]], rotation=45, ha="right", fontsize=9)
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.0%}"))
+    ax.set_xticklabels(
+        [f"{y}s" for y in years[::2]], rotation=45, ha="right", fontsize=9
+    )
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda y, _: f"{y:.0%}"))
     ax.legend(fontsize=11)
     ax.grid(axis="y", alpha=0.3)
 
@@ -238,10 +262,28 @@ def plot_results(all_rounds, decades, out_path):
     rated = sorted(zip(decades, years, win_rates), key=lambda x: x[2], reverse=True)
     for d, y, r in rated[:3]:
         label = first_book_label(books.get(d, ""))
-        ax.annotate(label, (y, r), textcoords="offset points", xytext=(0, 10), ha="center", fontsize=7, color="#27ae60", fontweight="bold")
+        ax.annotate(
+            label,
+            (y, r),
+            textcoords="offset points",
+            xytext=(0, 10),
+            ha="center",
+            fontsize=7,
+            color="#27ae60",
+            fontweight="bold",
+        )
     for d, y, r in rated[-3:]:
         label = first_book_label(books.get(d, ""))
-        ax.annotate(label, (y, r), textcoords="offset points", xytext=(0, -14), ha="center", fontsize=7, color="#c0392b", fontweight="bold")
+        ax.annotate(
+            label,
+            (y, r),
+            textcoords="offset points",
+            xytext=(0, -14),
+            ha="center",
+            fontsize=7,
+            color="#c0392b",
+            fontweight="bold",
+        )
 
     plt.tight_layout()
     plt.savefig(out_path, dpi=150)

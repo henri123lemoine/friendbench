@@ -25,7 +25,8 @@ def resolve_benchmark(request: Request) -> str:
 
 def discover_benchmarks() -> list[str]:
     return [
-        d.name for d in BENCHMARKS_DIR.iterdir()
+        d.name
+        for d in BENCHMARKS_DIR.iterdir()
         if d.is_dir() and (d / "data" / "models.yaml").exists()
     ]
 
