@@ -8,13 +8,14 @@ function loadYAML(filePath) {
 
 exports.handler = async function(event, context) {
   try {
-    const dataDir = path.join(__dirname, '..', '..', 'benchmarks', 'friendbench', 'data');
+    const dataDir = path.join(process.cwd(), 'benchmarks', 'friendbench', 'data');
     const modelsPath = path.join(dataDir, 'models.yaml');
-    const quotesPath = path.join(dataDir, 'quotes.yaml');
 
     if (!fs.existsSync(modelsPath)) {
-      throw new Error(`Models file not found at: ${modelsPath}`);
+      throw new Error(`Models file not found at: ${modelsPath} (cwd: ${process.cwd()})`);
     }
+
+    const quotesPath = path.join(dataDir, 'quotes.yaml');
 
     const models = loadYAML(modelsPath);
 

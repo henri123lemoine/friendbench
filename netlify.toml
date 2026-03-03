@@ -2,6 +2,9 @@
   publish = "benchmarks/friendbench/frontend"
   functions = "netlify/functions"
 
+[functions]
+  included_files = ["benchmarks/friendbench/data/**"]
+
 [[redirects]]
   from = "/api/data"
   to = "/.netlify/functions/get-data"
