@@ -8,24 +8,17 @@ function loadYAML(filePath) {
 
 exports.handler = async function(event, context) {
   try {
-    const dataDir = path.join(process.cwd(), 'benchmarks', 'friendbench', 'data');
+    const dataDir = path.resolve(__dirname, '..', '..', 'benchmarks', 'friendbench', 'data');
     const modelsPath = path.join(dataDir, 'models.yaml');
-
-    if (!fs.existsSync(modelsPath)) {
-      throw new Error(`Models file not found at: ${modelsPath} (cwd: ${process.cwd()})`);
-    }
-
+    const scoresPath = path.join(dataDir, 'scores.yaml');
     const quotesPath = path.join(dataDir, 'quotes.yaml');
 
     const models = loadYAML(modelsPath);
 
-    const scoresPath = path.join(dataDir, 'scores.yaml');
-    if (fs.existsSync(scoresPath)) {
-      const scores = loadYAML(scoresPath) || {};
-      for (const m of models) {
-        if (m.name in scores) {
-          m.score = scores[m.name];
-        }
+    const scores = loadYAML(scoresPath) || {};
+    for (const m of models) {
+      if (m.name in scores) {
+        m.score = scores[m.name];
       }
     }
 

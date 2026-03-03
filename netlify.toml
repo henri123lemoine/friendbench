@@ -1,4 +1,5 @@
 [build]
+  command = "node netlify/validate-build.js"
   publish = "benchmarks/friendbench/frontend"
   functions = "netlify/functions"
 

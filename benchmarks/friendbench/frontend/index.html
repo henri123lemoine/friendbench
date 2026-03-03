@@ -192,12 +192,11 @@
       ? modelData.filter(m => selected.split(',').map(s => s.trim()).includes(m.name))
       : modelData;
 
-    // Filter out hidden models unless showAll is true
     if (!showAll) {
       filteredModels = filteredModels.filter(m => !m.hidden);
     }
+    filteredModels = filteredModels.filter(m => m.score != null);
 
-    // Sort models by score in descending order
     const sortedData = [...filteredModels].sort((a, b) => b.score - a.score);
 
     // Helper: SVG path for a rect with only top corners rounded
