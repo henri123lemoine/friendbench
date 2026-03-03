@@ -8,3 +8,4 @@ logs/
 .ruff_cache/
 uv.lock
 benchmarks/litbench/results/
+data.json

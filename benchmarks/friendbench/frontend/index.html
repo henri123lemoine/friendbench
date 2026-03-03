@@ -157,7 +157,7 @@
   </div>
 
   <script type="module">
-    const response = await fetch('/api/data');
+    const response = await fetch('data.json');
 
     if (!response.ok) {
       console.error('Function response not ok:', response.status, response.statusText);
