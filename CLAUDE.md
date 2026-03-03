@@ -14,7 +14,7 @@ LitBench is standalone (no inspect_ai, just `run.py`).
 - Thinking variants are separate model entries: same `id`, different `name`, with a `generation_config`
 - Frontends are single HTML files with no build step — vanilla JS, inline CSS, SVG charts
 - Dev server routes by Host header (see `DOMAIN_MAP` in `server/main.py`)
-- Netlify function is currently hardcoded to friendbench
+- Netlify builds use `netlify/build.js` to produce a static `data.json` from YAML files — see CONTRIBUTING.md
 
 ## CLI
 
