@@ -1,3 +1,7 @@
 [build]
-  command = "node ../../netlify/build.js pressbench"
+  command = "npm install"
   publish = "frontend"
+
+[dev]
+  publish = "frontend"
+  framework = "#static"
