@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PressBench™</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <meta name="description" content="The official benchpress strength benchmark for LLMs">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
       padding: 20px;
-      font-family: Arial, sans-serif;
+      font-family: Inter, system-ui, sans-serif;
       line-height: 1.6;
       color: #333;
       background-color: #f8f9fa;
@@ -19,28 +23,54 @@
       align-items: center;
       min-height: 100vh;
     }
+
     .container {
-      max-width: 880px;
-      width: 100%;
+      width: 95%;
       margin: 0 auto;
     }
+
     @media (max-width: 600px) {
       body { padding: 10px; }
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div id="chart-container"></div>
   </div>
 
+  <footer style="text-align: center; margin-top: 40px; padding-bottom: 20px; width: 100%;">
+    <p style="color: #999; font-size: 12px;">PressBench 2025™</p>
+  </footer>
+
   <script type="module">
     const response = await fetch('data.json');
-    const { models: modelData } = await response.json();
 
-    const sortedData = [...modelData]
-      .filter(m => !m.hidden)
-      .sort((a, b) => b.score - a.score);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+    }
+
+    const responseData = await response.json();
+    if (responseData.error) throw new Error(`Server error: ${responseData.error}`);
+
+    const { models: modelData } = responseData;
+
+    const params = new URLSearchParams(window.location.search);
+    const selected = params.get('models');
+    const showAll = params.get('showAll') === 'true';
+
+    let filteredModels = selected
+      ? modelData.filter(m => selected.split(',').map(s => s.trim()).includes(m.name))
+      : modelData;
+
+    if (!showAll) {
+      filteredModels = filteredModels.filter(m => !m.hidden);
+    }
+    filteredModels = filteredModels.filter(m => m.score != null);
+
+    const sortedData = [...filteredModels].sort((a, b) => b.score - a.score);
+    const maxScore = Math.max(...sortedData.map(m => m.score));
 
     const hexToRgb = hex => {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -51,7 +81,7 @@
       } : null;
     };
 
-    const rgbToHex = ({r, g, b}) =>
+    const rgbToHex = ({ r, g, b }) =>
       '#' + [r, g, b].map(x => Math.round(x).toString(16).padStart(2, '0')).join('');
 
     const interpolateColor = (color1, color2, factor) => {
@@ -74,85 +104,194 @@
       if (segmentFactor === 0 && baseColors[segmentIndex]) {
         return baseColors[segmentIndex];
       }
-      return rgbToHex(
-        interpolateColor(
-          baseColors[segmentIndex],
-          baseColors[segmentIndex + 1],
-          segmentFactor
-        )
-      );
+      return rgbToHex(interpolateColor(baseColors[segmentIndex], baseColors[segmentIndex + 1], segmentFactor));
     };
 
-    const config = {
-      width: 880,
-      height: 500,
-      margin: { top: 40, right: 80, bottom: 100, left: 80 }
+    const roundedTopRect = (x, y, w, h, r) => {
+      r = Math.min(r, w / 2, h);
+      return `M${x},${y + h} L${x},${y + r} Q${x},${y} ${x + r},${y} L${x + w - r},${y} Q${x + w},${y} ${x + w},${y + r} L${x + w},${y + h} Z`;
     };
 
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", `0 0 ${config.width} ${config.height}`);
-    svg.setAttribute("width", "100%");
-    svg.setAttribute("height", "100%");
+    const roundedRightRect = (x, y, w, h, r) => {
+      r = Math.min(r, h / 2, w);
+      return `M${x},${y} L${x + w - r},${y} Q${x + w},${y} ${x + w},${y + r} L${x + w},${y + h - r} Q${x + w},${y + h} ${x + w - r},${y + h} L${x},${y + h} Z`;
+    };
 
-    svg.innerHTML = `
-      <rect width="${config.width}" height="${config.height}" fill="#f8f9fa"/>
-      <text x="${config.width/2}" y="${config.margin.top - 10}"
-            font-family="Arial" font-size="32" font-weight="bold"
-            text-anchor="middle" fill="#333">PressBench™</text>
-      <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom - 330}"
-            x2="${config.margin.left}" y2="${config.height - config.margin.bottom}"
-            stroke="#333" stroke-width="2"/>
-      <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom}"
-            x2="${config.width - config.margin.right}" y2="${config.height - config.margin.bottom}"
-            stroke="#333" stroke-width="2"/>
-      ${[0, 100, 200, 300, 400, 500].map(tick => `
-        <line x1="${config.margin.left - 5}" y1="${config.height - config.margin.bottom - (tick * 0.545)}"
-              x2="${config.margin.left}" y2="${config.height - config.margin.bottom - (tick * 0.545)}"
-              stroke="#333" stroke-width="2"/>
-        <text x="${config.margin.left - 10}" y="${config.height - config.margin.bottom - (tick * 0.545) + 5}"
-              font-family="Arial" font-size="12" text-anchor="end" fill="#666">${tick}</text>
-      `).join('')}
-      <text x="${config.margin.left - 45}" y="${config.height - config.margin.bottom - 150}"
-            font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle"
-            fill="#666" transform="rotate(-90, ${config.margin.left - 45}, ${config.height - config.margin.bottom - 150})">
-        Benchpress Lift (lbs)
-      </text>
-    `;
+    const measureSvgTextWidth = (text, fontSize = 12, fontFamily = 'Inter, system-ui, sans-serif') => {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      textEl.setAttribute("font-family", fontFamily);
+      textEl.setAttribute("font-size", fontSize);
+      textEl.textContent = text;
+      svg.appendChild(textEl);
+      document.body.appendChild(svg);
+      const width = textEl.getComputedTextLength();
+      document.body.removeChild(svg);
+      return width;
+    };
 
+    const getWidestLabelWidth = (models) =>
+      Math.max(...models.map(m => measureSvgTextWidth(m.name, 12)));
+
+    const niceMax = (value) => {
+      const magnitude = Math.pow(10, Math.floor(Math.log10(value)));
+      const normalized = value / magnitude;
+      const niceValues = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+      for (const n of niceValues) {
+        if (n >= normalized) return n * magnitude;
+      }
+      return 10 * magnitude;
+    };
+
+    const niceTicks = (max) => {
+      const step = max / 5;
+      const ticks = [];
+      for (let i = 0; i <= 5; i++) {
+        ticks.push(Math.round(i * step));
+      }
+      return ticks;
+    };
+
+    const container = document.getElementById("chart-container");
+    const widestLabel = getWidestLabelWidth(sortedData);
     const totalModels = sortedData.length;
-    const availableWidth = config.width - config.margin.left - config.margin.right;
-    const barWidth = Math.min(75, (availableWidth / (totalModels + 1)) - 15);
-    const totalBarsWidth = barWidth * totalModels;
-    const totalSpacingWidth = availableWidth - totalBarsWidth;
-    const spacing = totalSpacingWidth / (totalModels + 1);
+    const ceilScore = niceMax(maxScore);
+    const ticks = niceTicks(ceilScore);
 
-    sortedData.forEach((model, i) => {
-      const x = config.margin.left + spacing + (i * (barWidth + spacing));
-      const height = model.score * 0.545;
-      const y = config.height - config.margin.bottom - height;
-      const color = getColor(i, totalModels);
-      const lines = model.name.split('\n');
-      const lineHeight = 14;
+    const fontFamily = 'Inter, system-ui, sans-serif';
 
-      svg.innerHTML += `
-        <rect x="${x}" y="${y}" width="${barWidth}" height="${height}"
-          fill="${color}" opacity="0.8" rx="5"/>
-        <text x="${x + barWidth/2}" y="${config.height - config.margin.bottom + 30 - ((lines.length - 1) * lineHeight/2)}"
-          font-family="Arial" font-size="12"
-          text-anchor="middle" fill="#333">
-          ${lines.map((line, index) =>
-            `<tspan x="${x + barWidth/2}" dy="${index === 0 ? 0 : lineHeight}">${line}</tspan>`
-          ).join('')}
-        </text>
+    function renderChart() {
+      container.innerHTML = '';
+      const containerWidth = container.offsetWidth;
+      const useHorizontalLayout = containerWidth < 640;
+
+      const labelBarGap = 8;
+      const horizontalLeftMargin = widestLabel + labelBarGap;
+      const referenceWidth = 1000;
+      const chartWidth = useHorizontalLayout ? containerWidth : referenceWidth;
+      const barHeight = 28;
+      const barSpacing = 8;
+
+      const titleFontSize = 24;
+      const subtitleFontSize = 13;
+      const titleY = titleFontSize + 10;
+      const subtitleY = titleY + subtitleFontSize + 8;
+      const headerHeight = subtitleY + 15;
+
+      const bottomMargin = useHorizontalLayout ? 35 : 100;
+      const horizontalChartHeight = headerHeight + (totalModels * (barHeight + barSpacing)) + barSpacing + bottomMargin;
+      const chartHeight = useHorizontalLayout ? horizontalChartHeight : chartWidth / 1.7;
+
+      const config = {
+        width: chartWidth,
+        height: chartHeight,
+        margin: useHorizontalLayout
+          ? { top: headerHeight, right: 50, bottom: bottomMargin, left: horizontalLeftMargin }
+          : { top: headerHeight, right: 80, bottom: 100, left: 80 },
+      };
+
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", `0 0 ${config.width} ${config.height}`);
+      svg.setAttribute("width", "100%");
+      svg.setAttribute("height", "100%");
+      svg.setAttribute("overflow", "visible");
+
+      const chartAreaHeight = config.height - config.margin.top - config.margin.bottom;
+      const chartAreaWidth = config.width - config.margin.left - config.margin.right;
+
+      const headerSvg = `
+        <text x="${config.width / 2}" y="${titleY}"
+              font-family="${fontFamily}" font-size="${titleFontSize}" font-weight="bold"
+              text-anchor="middle" fill="#333">PressBench™</text>
+        <text x="${config.width / 2}" y="${subtitleY}"
+              font-family="${fontFamily}" font-size="${subtitleFontSize}"
+              text-anchor="middle" fill="#666">A systematic assessment of benchpress strength in large language models</text>
       `;
+
+      if (useHorizontalLayout) {
+        let barsSvg = '';
+        sortedData.forEach((model, i) => {
+          const y = config.margin.top + barSpacing + i * (barHeight + barSpacing);
+          const hBarWidth = (model.score / ceilScore) * chartAreaWidth;
+          const color = getColor(i, totalModels);
+          barsSvg += `
+            <text x="${config.margin.left - labelBarGap}" y="${y + barHeight / 2 + 4}"
+                  font-family="${fontFamily}" font-size="12" text-anchor="end" fill="#333">${model.name}</text>
+            <path d="${roundedRightRect(config.margin.left, y, hBarWidth, barHeight, 4)}" fill="${color}" opacity="0.8">
+              <title>${model.name}: ${model.score} lbs</title>
+            </path>
+            <text x="${config.margin.left + hBarWidth + 6}" y="${y + barHeight / 2 + 4}"
+                  font-family="${fontFamily}" font-size="11" text-anchor="start" fill="#555">${model.score}</text>
+          `;
+        });
+
+        svg.innerHTML = headerSvg + `
+          ${ticks.map(tick => `
+            <line x1="${config.margin.left + (tick / ceilScore) * chartAreaWidth}" y1="${config.margin.top}"
+                  x2="${config.margin.left + (tick / ceilScore) * chartAreaWidth}" y2="${config.height - config.margin.bottom}"
+                  stroke="${tick === 0 ? '#ccc' : '#e0e0e0'}" stroke-width="1"/>
+          `).join('')}
+          ${ticks.map(tick => `
+            <text x="${config.margin.left + (tick / ceilScore) * chartAreaWidth}" y="${config.height - config.margin.bottom + 18}"
+                  font-family="${fontFamily}" font-size="11" text-anchor="middle" fill="#888">${tick}</text>
+          `).join('')}
+          ${barsSvg}
+        `;
+      } else {
+        let barsSvg = '';
+        const vBarWidth = Math.min(100, chartAreaWidth / (totalModels + 1) - 10);
+        const totalBarsWidth = vBarWidth * totalModels;
+        const spacing = (chartAreaWidth - totalBarsWidth) / (totalModels + 1);
+
+        sortedData.forEach((model, i) => {
+          const x = config.margin.left + spacing + i * (vBarWidth + spacing);
+          const vBarHeight = (model.score / ceilScore) * chartAreaHeight;
+          const y = config.height - config.margin.bottom - vBarHeight;
+          const barCenter = x + vBarWidth / 2;
+          const labelX = barCenter + 12;
+          const labelY = config.height - config.margin.bottom + 14;
+          const color = getColor(i, totalModels);
+
+          barsSvg += `
+            <path d="${roundedTopRect(x, y, vBarWidth, vBarHeight, 4)}" fill="${color}" opacity="0.8">
+              <title>${model.name}: ${model.score} lbs</title>
+            </path>
+            <text x="${labelX}" y="${labelY}"
+                  font-family="${fontFamily}" font-size="11" text-anchor="end" fill="#333"
+                  transform="rotate(-45, ${labelX}, ${labelY})">${model.name}</text>
+          `;
+        });
+
+        svg.innerHTML = headerSvg + `
+          ${ticks.map(tick => `
+            <line x1="${config.margin.left}" y1="${config.height - config.margin.bottom - (tick / ceilScore) * chartAreaHeight}"
+                  x2="${config.width - config.margin.right}" y2="${config.height - config.margin.bottom - (tick / ceilScore) * chartAreaHeight}"
+                  stroke="${tick === 0 ? '#ccc' : '#e0e0e0'}" stroke-width="1"/>
+          `).join('')}
+          ${ticks.map(tick => `
+            <text x="${config.margin.left - 10}" y="${config.height - config.margin.bottom - (tick / ceilScore) * chartAreaHeight + 4}"
+                  font-family="${fontFamily}" font-size="11" text-anchor="end" fill="#888">${tick}</text>
+          `).join('')}
+          <text x="${config.margin.left - 40}" y="${config.margin.top + chartAreaHeight / 2}"
+                font-family="${fontFamily}" font-size="12" text-anchor="middle"
+                fill="#888" transform="rotate(-90, ${config.margin.left - 40}, ${config.margin.top + chartAreaHeight / 2})">
+            Benchpress Lift (lbs)
+          </text>
+          ${barsSvg}
+        `;
+      }
+
+      container.appendChild(svg);
+    }
+
+    renderChart();
+
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(renderChart, 100);
     });
-
-    svg.innerHTML += `
-      <text x="${config.width/2}" y="${config.height - 30}" font-family="Arial" font-size="12"
-            text-anchor="middle" fill="#333">© PressBench 2025</text>
-    `;
-
-    document.getElementById('chart-container').appendChild(svg);
   </script>
 </body>
+
 </html>
