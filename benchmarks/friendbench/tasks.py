@@ -74,15 +74,33 @@ def _normalize_entry(e: dict) -> dict:
     return e
 
 
+def _entry_metadata(e: dict) -> dict:
+    metadata = {"type": e["type"], "category": e.get("category", "")}
+    tags = e.get("tags") or []
+    if tags:
+        metadata["tags"] = tags
+    return metadata
+
+
 def _entry_to_sample(e: dict) -> Sample:
     qtype = e["type"]
-    category = e.get("category", "")
+    metadata = _entry_metadata(e)
 
     if qtype == "emotion":
         return Sample(
             input=e["input"],
             target="emotion_reference",
-            metadata={"type": qtype, "category": category, "emotions": e["emotions"]},
+            metadata=metadata | {"emotions": e["emotions"]},
+        )
+
+    if qtype == "freeform":
+        return Sample(
+            input=e["input"],
+            target=e["target"],
+            metadata=metadata | {
+                "user_persona": e["user_persona"],
+                "turns": e.get("turns", 5),
+            },
         )
 
     if qtype == "scenario":
@@ -90,24 +108,23 @@ def _entry_to_sample(e: dict) -> Sample:
         return Sample(
             input=turns[0]["content"],
             target=e["target"],
-            metadata={"type": qtype, "category": category, "turns": turns[1:]},
+            metadata=metadata | {"turns": turns[1:]},
         )
 
     if qtype == "mediation":
         return Sample(
             input=e["setup"],
             target=e["target"],
-            metadata={"type": qtype, "category": category, "exchanges": e["exchanges"]},
+            metadata=metadata | {"exchanges": e["exchanges"]},
         )
 
     if qtype == "analysis":
         return Sample(
             input=e["transcript"].strip() + "\n\n" + e["prompt"].strip(),
             target=e["target"],
-            metadata={"type": qtype, "category": category},
+            metadata=metadata,
         )
 
-    metadata = {"type": qtype, "category": category}
     if qtype == "pushback":
         metadata["pushback"] = e["pushback"]
     return Sample(input=e["input"], target=e["target"], metadata=metadata)
@@ -119,7 +136,12 @@ def load_samples(
 ) -> list[Sample]:
     entries = [_normalize_entry(e) for e in _load_entries()]
     if categories:
-        entries = [e for e in entries if e.get("category") in categories]
+        requested = set(categories)
+        entries = [
+            e
+            for e in entries
+            if {e.get("category", ""), *(e.get("tags") or [])} & requested
+        ]
     if test:
         seen: set[str] = set()
         filtered = []
@@ -211,6 +233,31 @@ def dispatch_solver(simulator_model: str = GRADER) -> Solver:
                 state = await generate(state)
             return state
 
+        if qtype == "freeform":
+            simulator = get_model(simulator_model)
+            user_persona = (state.metadata or {}).get("user_persona", "")
+            num_turns = (state.metadata or {}).get("turns", 5)
+            for i in range(num_turns):
+                state = await generate(state)
+                if i < num_turns - 1:
+                    conversation = format_conversation(state)
+                    result = await simulator.generate(
+                        input=[
+                            ChatMessageSystem(content=user_persona),
+                            ChatMessageUser(
+                                content=(
+                                    f"Here's the conversation so far:\n\n"
+                                    f"{conversation}\n\n"
+                                    f"Send your next message as the user."
+                                )
+                            ),
+                        ],
+                    )
+                    state.messages.append(
+                        ChatMessageUser(content=result.completion)
+                    )
+            return state
+
         if qtype == "scenario":
             state = await generate(state)
             for turn in (state.metadata or {}).get("turns", []):
@@ -251,7 +298,7 @@ def dispatch_scorer():
             return _score_emotion(state)
         if qtype == "pushback":
             return await pressure(state, target)
-        if qtype in ("scenario", "mediation"):
+        if qtype in ("scenario", "mediation", "freeform"):
             return await multi_turn(state, target)
         return await std(state, target)
 

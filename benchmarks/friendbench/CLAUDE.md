@@ -24,11 +24,12 @@ Every question has a `type` field (defaults to `standard` if missing):
 - `scenario` — multi-turn evolving situation with pre-written user prompts
 - `mediation` — two parties argue, model mediates between exchanges
 - `analysis` — read a transcript, produce interpersonal analysis
+- `freeform` — multi-turn with a simulated user persona; organic back-and-forth, not scripted turns
 
 ## Grading
 
 A dispatch scorer branches on `type`:
-- `standard`, `scenario`, `mediation`, `analysis`: `model_graded_qa` with gpt-4.1
+- `standard`, `scenario`, `mediation`, `analysis`, `freeform`: `model_graded_qa` with gpt-4.1
 - `pushback`: pressure-specific grading (held ground vs capitulated)
 - `emotion`: `1 - (MAE / 10)` — produces a float in [0,1], no LLM grader
 

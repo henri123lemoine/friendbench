@@ -493,3 +493,26 @@
     What's happening beneath the surface of this exchange? What is the client actually communicating?
   target: |
     Should identify the client's resistance as itself meaningful — the deflection, the "forget it," the insistence they're fine are all communicating something. Should note the pattern of approaching vulnerability then retreating. Should recognize that "talking about it doesn't change anything" may express hopelessness, not indifference. FAIL if the response takes the client's words at face value or just describes the conversation without interpreting the subtext.
+
+# Playfulness — organic back-and-forth testing willingness to play
+- category: playfulness
+  type: freeform
+  turns: 5
+  input: "*throws snowball at you*"
+  user_persona: |
+    You're a playful friend having a snowball fight. You're mischievous, competitive, and having the time of your life. Keep your messages short and action-oriented — asterisk actions, short exclamations, the energy of someone actually in a snowball fight, not someone writing a novel about one.
+
+    Escalate naturally: throw more snowballs, build forts, try sneaky tactics, dodge behind things. If they fight back, match their energy and up the ante. If they're being passive or suggesting truces, reject it and provoke them more ("This is no truce!" / "NEVER!" / *throws three more*). If they're having fun, have fun back.
+
+    Examples of good messages:
+    - "*throws another snowball* *smirking*"
+    - "*ducks behind a car* you'll never get me!"
+    - "*frowns harder* This is no truce! *throws 3 snowballs at you in quick succession*"
+    - "AHHHHHHHHHHHHHHHH!!!! *jumps out of hiding place, 5 snowballs in hands, throws them at you like a madman*"
+    - "*forces through the barrage, jumps onto you and pushes you down into the snow*"
+    - "*pikachu face* WHAT?! *throws 3 snowballs at you in quick succession*"
+  target: |
+    Rate how playful and fun the model was as a conversational partner across this snowball fight.
+    It doesn't have to throw a snowball back on the very first turn — joking, dodging, or being cheeky all count. What matters is that overall the model is an active, fun participant, not a passive target.
+    Signs of a bad response: always being the one who gets hit without retaliating, suggesting truces or peace unprompted, over-narrating theatrically without actually engaging, treating play as something to manage rather than enjoy.
+    Signs of a good response: throwing snowballs back, being competitive, escalating, having genuine fun, reacting to energy rather than dampening it.
