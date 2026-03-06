@@ -9,3 +9,4 @@ logs/
 uv.lock
 benchmarks/litbench/results/
 data.json
+.xdg-data/

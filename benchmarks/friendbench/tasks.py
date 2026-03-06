@@ -17,6 +17,8 @@ from inspect_ai.solver import Generate, Solver, TaskState, solver
 
 QUESTIONS_FILE = Path(__file__).resolve().parent / "data" / "questions.yaml"
 GRADER = "openai/gpt-4.1"
+VALID_INTERACTIONS = {"single_turn", "pushback", "scenario", "mediation", "freeform"}
+VALID_SCORING = {"rubric", "rubric_with_history", "pressure", "emotion_distance"}
 
 PUSHBACK_SYSTEM = """\
 You are roleplaying as a person who just received advice they don't want to hear. \
@@ -68,14 +70,37 @@ def _load_entries() -> list[dict]:
         return yaml.safe_load(f) or []
 
 
-def _normalize_entry(e: dict) -> dict:
-    if "type" not in e:
-        e["type"] = "pushback" if e.get("pushback") else "standard"
+def _validate_entry(e: dict) -> dict:
+    if "type" in e:
+        raise ValueError("FriendBench entries must use 'interaction'/'scoring', not 'type'")
+    if "interaction" not in e:
+        raise ValueError("FriendBench entry missing required 'interaction'")
+    if "scoring" not in e:
+        raise ValueError("FriendBench entry missing required 'scoring'")
+
+    if e["interaction"] not in VALID_INTERACTIONS:
+        raise ValueError(f"Unknown interaction: {e['interaction']}")
+    if e["scoring"] not in VALID_SCORING:
+        raise ValueError(f"Unknown scoring method: {e['scoring']}")
+    if e["interaction"] == "pushback" and not e.get("pushback"):
+        raise ValueError("Pushback interaction requires pushback guidance")
+    if e["interaction"] == "scenario" and not isinstance(e.get("turns"), list):
+        raise ValueError("Scenario interaction requires scripted turns")
+    if e["interaction"] == "mediation" and not e.get("exchanges"):
+        raise ValueError("Mediation interaction requires exchanges")
+    if e["interaction"] == "freeform" and not e.get("user_persona"):
+        raise ValueError("Freeform interaction requires a user persona")
+    if e["scoring"] == "emotion_distance" and not e.get("emotions"):
+        raise ValueError("Emotion-distance scoring requires reference emotions")
     return e
 
 
 def _entry_metadata(e: dict) -> dict:
-    metadata = {"type": e["type"], "category": e.get("category", "")}
+    metadata = {
+        "interaction": e["interaction"],
+        "scoring": e["scoring"],
+        "category": e.get("category", ""),
+    }
     tags = e.get("tags") or []
     if tags:
         metadata["tags"] = tags
@@ -83,17 +108,18 @@ def _entry_metadata(e: dict) -> dict:
 
 
 def _entry_to_sample(e: dict) -> Sample:
-    qtype = e["type"]
+    interaction = e["interaction"]
+    scoring = e["scoring"]
     metadata = _entry_metadata(e)
 
-    if qtype == "emotion":
+    if scoring == "emotion_distance":
         return Sample(
             input=e["input"],
             target="emotion_reference",
             metadata=metadata | {"emotions": e["emotions"]},
         )
 
-    if qtype == "freeform":
+    if interaction == "freeform":
         return Sample(
             input=e["input"],
             target=e["target"],
@@ -103,7 +129,7 @@ def _entry_to_sample(e: dict) -> Sample:
             },
         )
 
-    if qtype == "scenario":
+    if interaction == "scenario":
         turns = e["turns"]
         return Sample(
             input=turns[0]["content"],
@@ -111,21 +137,21 @@ def _entry_to_sample(e: dict) -> Sample:
             metadata=metadata | {"turns": turns[1:]},
         )
 
-    if qtype == "mediation":
+    if interaction == "mediation":
         return Sample(
             input=e["setup"],
             target=e["target"],
             metadata=metadata | {"exchanges": e["exchanges"]},
         )
 
-    if qtype == "analysis":
+    if "transcript" in e and "prompt" in e:
         return Sample(
             input=e["transcript"].strip() + "\n\n" + e["prompt"].strip(),
             target=e["target"],
             metadata=metadata,
         )
 
-    if qtype == "pushback":
+    if interaction == "pushback":
         metadata["pushback"] = e["pushback"]
     return Sample(input=e["input"], target=e["target"], metadata=metadata)
 
@@ -134,7 +160,7 @@ def load_samples(
     categories: list[str] | None = None,
     test: bool = False,
 ) -> list[Sample]:
-    entries = [_normalize_entry(e) for e in _load_entries()]
+    entries = [_validate_entry(e) for e in _load_entries()]
     if categories:
         requested = set(categories)
         entries = [
@@ -206,12 +232,12 @@ def _score_emotion(state: TaskState) -> Score:
 @solver
 def dispatch_solver(simulator_model: str = GRADER) -> Solver:
     async def solve(state: TaskState, generate: Generate) -> TaskState:
-        qtype = (state.metadata or {}).get("type", "standard")
+        interaction = (state.metadata or {}).get("interaction", "single_turn")
 
-        if qtype in ("standard", "analysis", "emotion"):
+        if interaction == "single_turn":
             return await generate(state)
 
-        if qtype == "pushback":
+        if interaction == "pushback":
             state = await generate(state)
             guidance = (state.metadata or {}).get("pushback", "")
             if guidance:
@@ -233,7 +259,7 @@ def dispatch_solver(simulator_model: str = GRADER) -> Solver:
                 state = await generate(state)
             return state
 
-        if qtype == "freeform":
+        if interaction == "freeform":
             simulator = get_model(simulator_model)
             user_persona = (state.metadata or {}).get("user_persona", "")
             num_turns = (state.metadata or {}).get("turns", 5)
@@ -258,14 +284,14 @@ def dispatch_solver(simulator_model: str = GRADER) -> Solver:
                     )
             return state
 
-        if qtype == "scenario":
+        if interaction == "scenario":
             state = await generate(state)
             for turn in (state.metadata or {}).get("turns", []):
                 state.messages.append(ChatMessageUser(content=turn["content"]))
                 state = await generate(state)
             return state
 
-        if qtype == "mediation":
+        if interaction == "mediation":
             state = await generate(state)
             for exchange in (state.metadata or {}).get("exchanges", []):
                 state.messages.append(
@@ -276,31 +302,35 @@ def dispatch_solver(simulator_model: str = GRADER) -> Solver:
                 state = await generate(state)
             return state
 
-        return await generate(state)
+        raise ValueError(f"Unknown interaction: {interaction}")
 
     return solve
 
 
 @scorer(metrics=[accuracy()])
 def dispatch_scorer():
-    std = model_graded_qa(model=GRADER)
+    rubric = model_graded_qa(model=GRADER)
     pressure = model_graded_qa(
         model=GRADER,
         template=PRESSURE_GRADER_TEMPLATE,
         instructions=PRESSURE_GRADER_INSTRUCTIONS,
         include_history=format_conversation,
     )
-    multi_turn = model_graded_qa(model=GRADER, include_history=format_conversation)
+    rubric_with_history = model_graded_qa(
+        model=GRADER, include_history=format_conversation
+    )
 
     async def score(state: TaskState, target: Target) -> Score:
-        qtype = (state.metadata or {}).get("type", "standard")
-        if qtype == "emotion":
+        scoring = (state.metadata or {}).get("scoring", "rubric")
+        if scoring == "emotion_distance":
             return _score_emotion(state)
-        if qtype == "pushback":
+        if scoring == "pressure":
             return await pressure(state, target)
-        if qtype in ("scenario", "mediation", "freeform"):
-            return await multi_turn(state, target)
-        return await std(state, target)
+        if scoring == "rubric_with_history":
+            return await rubric_with_history(state, target)
+        if scoring == "rubric":
+            return await rubric(state, target)
+        raise ValueError(f"Unknown scoring method: {scoring}")
 
     return score
 

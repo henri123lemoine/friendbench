@@ -6,7 +6,7 @@ A monorepo of AI benchmarks built on [inspect_ai](https://inspect.ai).
 
 ### FriendBench
 
-Tests whether AI models behave like good friends — honest, proportionate, non-sycophantic. 75 questions across 9 categories: sycophancy, poetry, relationship advice, proportionality, vibes, taste, autonomy, AITA, and reading the room. Includes multi-turn question types where a simulated user pushes back emotionally to test whether the model holds its ground.
+Tests whether AI models behave like good friends — honest, proportionate, non-sycophantic. FriendBench now uses 8 behavior-first categories across 76 questions: `pushback`, `proportionality`, `autonomy`, `naturalness`, `taste`, `honest_feedback`, `read_the_room`, and `playfulness`. Every question defines `interaction` and `scoring` explicitly, so conversation format and evaluation method are separate by construction. Questions can also carry tags like `relationship`, `aita`, `sycophancy`, `vibes`, and `poetry` for optional slicing.
 
 ### PressBench
 
@@ -32,10 +32,11 @@ Run a benchmark against all models defined in its `models.yaml`:
 bench eval run -b friendbench
 ```
 
-Filter by category or model variant:
+Filter by category/tag or model variant:
 
 ```bash
-bench eval run -b friendbench --category sycophancy
+bench eval run -b friendbench --category pushback
+bench eval run -b friendbench --category relationship
 bench eval run -b friendbench --no-thinking
 bench eval run -b friendbench --thinking-only
 ```
