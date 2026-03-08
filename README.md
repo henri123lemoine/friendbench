@@ -53,6 +53,8 @@ Smoke-test with cheap models:
 bench eval run -b friendbench --test
 ```
 
+Generations are cached by default in `.inspect-cache/`. Disable with `--no-cache`.
+
 List configured models:
 
 ```bash

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import click
@@ -6,6 +7,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BENCHMARKS_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BENCHMARKS_DIR.parent
+DEFAULT_INSPECT_CACHE_DIR = REPO_ROOT / ".inspect-cache"
+os.environ.setdefault("INSPECT_CACHE_DIR", str(DEFAULT_INSPECT_CACHE_DIR))
 TEST_MODELS = ["anthropic/claude-haiku-4-5-20251001", "openai/gpt-4o-mini"]
 
 
@@ -71,13 +75,7 @@ def eval_group():
 @click.option(
     "--max-retries", default=None, type=int, help="Max retries for model API requests"
 )
-@click.option(
-    "--cache",
-    is_flag=False,
-    flag_value="true",
-    default=None,
-    help="Cache model generations (optionally specify duration e.g. 7D)",
-)
+@click.option("--no-cache", is_flag=True, help="Disable caching of model generations")
 @click.option(
     "--test",
     is_flag=True,
@@ -98,7 +96,7 @@ def run(
     no_fail_on_error,
     limit,
     max_retries,
-    cache,
+    no_cache,
     test,
 ):
     from inspect_ai import eval as inspect_eval
@@ -123,7 +121,7 @@ def run(
             "fail_on_error": False if no_fail_on_error else fail_on_error,
             "limit": int(limit) if limit and limit.isdigit() else limit,
             "max_retries": max_retries,
-            "cache": True if cache == "true" else cache,
+            "cache": not no_cache or None,
         }.items()
         if v is not None
     }

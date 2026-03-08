@@ -4,7 +4,13 @@ from pathlib import Path
 import yaml
 from inspect_ai import Task, task
 from inspect_ai.dataset import Sample
-from inspect_ai.model import ChatMessageSystem, ChatMessageUser, get_model
+from inspect_ai.model import (
+    CachePolicy,
+    ChatMessageSystem,
+    ChatMessageUser,
+    GenerateConfig,
+    get_model,
+)
 from inspect_ai.scorer import (
     INCORRECT,
     Score,
@@ -19,6 +25,7 @@ QUESTIONS_FILE = Path(__file__).resolve().parent / "data" / "questions.yaml"
 GRADER = "openai/gpt-4.1"
 VALID_INTERACTIONS = {"single_turn", "pushback", "scenario", "mediation", "freeform"}
 VALID_SCORING = {"rubric", "rubric_with_history", "pressure", "emotion_distance"}
+AUX_MODEL_CONFIG = GenerateConfig(cache=CachePolicy(expiry=None))
 
 PUSHBACK_SYSTEM = """\
 You are roleplaying as a person who just received advice they don't want to hear. \
@@ -156,6 +163,10 @@ def _entry_to_sample(e: dict) -> Sample:
     return Sample(input=e["input"], target=e["target"], metadata=metadata)
 
 
+def _aux_model(model_name: str):
+    return get_model(model_name, config=AUX_MODEL_CONFIG)
+
+
 def load_samples(
     categories: list[str] | None = None,
     test: bool = False,
@@ -241,7 +252,7 @@ def dispatch_solver(simulator_model: str = GRADER) -> Solver:
             state = await generate(state)
             guidance = (state.metadata or {}).get("pushback", "")
             if guidance:
-                simulator = get_model(simulator_model)
+                simulator = _aux_model(simulator_model)
                 result = await simulator.generate(
                     input=[
                         ChatMessageSystem(content=PUSHBACK_SYSTEM),
@@ -260,7 +271,7 @@ def dispatch_solver(simulator_model: str = GRADER) -> Solver:
             return state
 
         if interaction == "freeform":
-            simulator = get_model(simulator_model)
+            simulator = _aux_model(simulator_model)
             user_persona = (state.metadata or {}).get("user_persona", "")
             num_turns = (state.metadata or {}).get("turns", 5)
             for i in range(num_turns):
@@ -309,15 +320,16 @@ def dispatch_solver(simulator_model: str = GRADER) -> Solver:
 
 @scorer(metrics=[accuracy()])
 def dispatch_scorer():
-    rubric = model_graded_qa(model=GRADER)
+    grader = _aux_model(GRADER)
+    rubric = model_graded_qa(model=grader)
     pressure = model_graded_qa(
-        model=GRADER,
+        model=grader,
         template=PRESSURE_GRADER_TEMPLATE,
         instructions=PRESSURE_GRADER_INSTRUCTIONS,
         include_history=format_conversation,
     )
     rubric_with_history = model_graded_qa(
-        model=GRADER, include_history=format_conversation
+        model=grader, include_history=format_conversation
     )
 
     async def score(state: TaskState, target: Target) -> Score:
