@@ -1,68 +1,95 @@
 # Anthropic
 - name: Sonnet 4.6
   id: anthropic/claude-sonnet-4-6
+  date: 2026-02-17
 
 - name: Sonnet 4.6 (thinking)
   id: anthropic/claude-sonnet-4-6
+  date: 2026-02-17
   generation_config:
     reasoning_effort: xhigh
 
 - name: Opus 4.6
+  date: 2026-02-04
   id: anthropic/claude-opus-4-6
 
 - name: Opus 4.6 (thinking)
   id: anthropic/claude-opus-4-6
+  date: 2026-02-04
   generation_config:
     reasoning_effort: xhigh
 
 - name: Opus 4.5
   id: anthropic/claude-opus-4-5
+  date: 2025-11-24
 
 - name: Opus 4.5 (thinking)
   id: anthropic/claude-opus-4-5
+  date: 2025-11-24
   generation_config:
     reasoning_tokens: 32000
 
 - name: Sonnet 4.5
   id: anthropic/claude-sonnet-4-5
+  date: 2025-09-29
 
 - name: Sonnet 4.5 (thinking)
   id: anthropic/claude-sonnet-4-5
+  date: 2025-09-29
+  generation_config:
+    reasoning_tokens: 32000
+
+- name: Haiku 4.5
+  id: anthropic/claude-haiku-4-5
+  date: 2025-10-15
+
+- name: Haiku 4.5 (thinking)
+  id: anthropic/claude-haiku-4-5
+  date: 2025-10-15
   generation_config:
     reasoning_tokens: 32000
 
 - name: Sonnet 4
+  date: 2025-05-14
   id: anthropic/claude-sonnet-4-0
 
 - name: Sonnet 4 (thinking)
   id: anthropic/claude-sonnet-4-0
+  date: 2025-05-14
   generation_config:
     reasoning_tokens: 32000
 
 - name: Opus 4.1
   id: anthropic/claude-opus-4-1
+  date: 2025-08-05
 
 - name: Opus 4.1 (thinking)
   id: anthropic/claude-opus-4-1
+  date: 2025-08-05
   generation_config:
     reasoning_tokens: 32000
 
 - name: Opus 4
   id: anthropic/claude-opus-4-0
+  date: 2025-05-14
 
 - name: Opus 4 (thinking)
   id: anthropic/claude-opus-4-0
+  date: 2025-05-14
   generation_config:
     reasoning_tokens: 32000
 
 - name: Sonnet 3.7
-  hidden: true
+
 
 - name: Sonnet 3.6
-  hidden: true
+
 
 - name: Opus 3
-  hidden: true
+
+- name: Haiku 3
+  id: anthropic/claude-3-haiku-20240307
+  date: 2024-03-07
 
 # xAI
 - name: Grok 4
@@ -71,11 +98,11 @@
 - name: Grok 4.20
   # API not yet available — expected mid-to-late March 2026
   # id: grok/grok-4-20
-  hidden: true
+
 
 - name: Grok 4.1
   id: grok/grok-4-1-fast-non-reasoning
-  hidden: true
+
 
 - name: Grok 3
   id: grok/grok-3
@@ -88,6 +115,9 @@
   id: openai/gpt-5.4
   generation_config:
     reasoning_effort: high
+
+- name: GPT 5.3 Chat
+  id: openai/gpt-5.3-chat-latest
 
 - name: GPT 5.2
   id: openai/gpt-5.2
@@ -109,37 +139,40 @@
 
 - name: GPT 4.5
   id: openai/gpt-4.5-preview
-  hidden: true
+
 
 - name: GPT 4o (old)
   id: openai/gpt-4o-2024-05-13
-  hidden: true
+
 
 - name: GPT 4o
   id: openai/gpt-4o
 
 - name: o3-mini (high)
   id: openai/o3-mini
-  hidden: true
+
 
 - name: o4-mini (high)
   id: openai/o4-mini
-  hidden: true
+
 
 - name: o3
   id: openai/o3
 
+- name: GPT-3.5-turbo
+  id: openai/gpt-3.5-turbo-instruct
+
 # DeepSeek
 - name: DeepSeek V3
   id: openai-api/deepseek/deepseek-chat
-  hidden: true
+
 
 - name: R1
   id: openai-api/deepseek/deepseek-reasoner
 
 - name: R1 (new)
   id: openai-api/deepseek/deepseek-reasoner
-  hidden: true
+
 
 # Google
 - name: Gemini 2.5 Pro
@@ -159,107 +192,107 @@
 # Open Source (via OpenRouter)
 - name: Llama 4 Maverick
   id: openrouter/meta-llama/llama-4-maverick
-  hidden: true
+
 
 - name: Llama 4 Scout
   id: openrouter/meta-llama/llama-4-scout
-  hidden: true
+
 
 - name: Llama 3.3 70B
   id: openrouter/meta-llama/llama-3.3-70b-instruct
-  hidden: true
+
 
 - name: Llama 3.1 405B
   id: openrouter/meta-llama/llama-3.1-405b-instruct
-  hidden: true
+
 
 - name: Qwen3 235B
   id: openrouter/qwen/qwen3-235b-a22b
-  hidden: true
+
 
 - name: QwQ 32B
   id: openrouter/qwen/qwq-32b
-  hidden: true
+
 
 - name: Qwen 2.5 72B
   id: openrouter/qwen/qwen-2.5-72b-instruct
-  hidden: true
+
 
 - name: Mistral Large 3
   id: openrouter/mistralai/mistral-large-2512
-  hidden: true
+
 
 - name: DeepSeek V3.2
   id: openrouter/deepseek/deepseek-v3.2
-  hidden: true
+
 
 - name: Qwen3.5 397B
   id: openrouter/qwen/qwen3.5-397b-a17b
-  hidden: true
+
 
 - name: Qwen3.5 27B
   id: openrouter/qwen/qwen3.5-27b
-  hidden: true
+
 
 - name: Kimi K2.5
   id: openrouter/moonshotai/kimi-k2.5
-  hidden: true
+
 
 - name: GLM-5
   id: openrouter/z-ai/glm-5
-  hidden: true
+
 
 - name: MiniMax M2.5
   id: openrouter/minimax/minimax-m2.5
-  hidden: true
+
 
 - name: Seed 1.6
   id: openrouter/bytedance-seed/seed-1.6
-  hidden: true
+
 
 - name: DeepSeek V3.2 Speciale
   id: openrouter/deepseek/deepseek-v3.2-speciale
-  hidden: true
+
 
 - name: Qwen3.5 122B
   id: openrouter/qwen/qwen3.5-122b-a10b
-  hidden: true
+
 
 - name: Llama 3.1 70B
   id: openrouter/meta-llama/llama-3.1-70b-instruct
-  hidden: true
+
 
 - name: MiMo V2 Flash
   id: openrouter/xiaomi/mimo-v2-flash
-  hidden: true
+
 
 - name: OLMo 3.1 32B
   id: openrouter/allenai/olmo-3.1-32b-instruct
-  hidden: true
+
 
 - name: Nemotron 3 Nano 30B
   id: openrouter/nvidia/nemotron-3-nano-30b-a3b
-  hidden: true
+
 
 - name: Solar Pro 3
   id: openrouter/upstage/solar-pro-3
-  hidden: true
+
 
 - name: Step 3.5 Flash
   id: openrouter/stepfun/step-3.5-flash
-  hidden: true
+
 
 - name: Seed 2.0 Mini
   id: openrouter/bytedance-seed/seed-2.0-mini
-  hidden: true
+
 
 - name: GLM-4.7
   id: openrouter/z-ai/glm-4.7
-  hidden: true
+
 
 - name: Devstral 2
   id: openrouter/mistralai/devstral-2512
-  hidden: true
+
 
 # API model IDs
 # DO NOT DELETE
