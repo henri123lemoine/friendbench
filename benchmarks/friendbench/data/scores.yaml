@@ -1,0 +1,32 @@
+GPT 4o: 34
+GPT 5: 57
+GPT 5.1: 64
+GPT 5.1 (thinking): 67
+GPT 5.2: 63
+GPT 5.2 (thinking): 70
+GPT 5.4 (thinking): 73
+Gemini 2.5 Pro: 60
+Gemini 3 Pro: 72
+Gemini 3 Pro (thinking): 68
+Gemini 3.1 Pro: 72
+Grok 3: 56
+Grok 4: 58
+Opus 4: 62
+Opus 4 (thinking): 71
+Opus 4.1: 71
+Opus 4.1 (thinking): 71
+Opus 4.5: 70
+Opus 4.5 (thinking): 82
+Opus 4.6: 72
+Opus 4.6 (thinking): 74
+R1 (new): 55
+Sonnet 4: 63
+Sonnet 4 (thinking): 66
+Sonnet 4.5: 73
+Sonnet 4.5 (thinking): 76
+Sonnet 4.6: 68
+Sonnet 4.6 (thinking): 70
+google/gemini-2.5-pro: 62
+o3: 64
+openai/gpt-4.1: 56
+openai/gpt-4.1-nano: 30
