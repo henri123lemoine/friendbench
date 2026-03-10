@@ -100,6 +100,7 @@ def run(
     test,
 ):
     from inspect_ai import eval as inspect_eval
+    from inspect_ai.model import CachePolicy
     from .models import resolve_models
 
     bench_dir = resolve_benchmark(benchmark)
@@ -121,7 +122,7 @@ def run(
             "fail_on_error": False if no_fail_on_error else fail_on_error,
             "limit": int(limit) if limit and limit.isdigit() else limit,
             "max_retries": max_retries,
-            "cache": not no_cache or None,
+            "cache": CachePolicy(expiry=None) if not no_cache else None,
         }.items()
         if v is not None
     }
