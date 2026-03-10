@@ -135,6 +135,40 @@
       opacity: 1;
     }
 
+    .version-toggle {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 16px;
+    }
+
+    .version-toggle button {
+      padding: 6px 16px;
+      border: 1px solid #ccc;
+      background: white;
+      font-family: Inter, system-ui, sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      color: #666;
+      transition: all 0.15s ease;
+    }
+
+    .version-toggle button:first-child {
+      border-radius: 6px 0 0 6px;
+    }
+
+    .version-toggle button:last-child {
+      border-radius: 0 6px 6px 0;
+      border-left: none;
+    }
+
+    .version-toggle button.active {
+      background: #4e79a7;
+      border-color: #4e79a7;
+      color: white;
+      font-weight: 600;
+    }
+
     @media (max-width: 600px) {
       body {
         padding: 10px;
@@ -149,6 +183,7 @@
 
 <body>
   <div class="container">
+    <div id="version-toggle" class="version-toggle"></div>
     <div id="chart-container"></div>
     <div class="quotes-section">
       <h2 class="quotes-title">Some thoughts from our High Taste Testers™</h2>
@@ -181,23 +216,52 @@
       throw new Error(`Server error: ${responseData.error}`);
     }
 
-    const {models: modelData, quotes: quotesData} = responseData;
+    const {models: modelData, quotes: quotesData, scores: scoresData = {}} = responseData;
 
-    // Filter by models query parameter if provided
     const params = new URLSearchParams(window.location.search);
     const selected = params.get('models');
     const showAll = params.get('showAll') === 'true';
+    const versions = Object.keys(scoresData);
+    let currentVersion = params.get('v') || versions[0] || 'v0';
 
-    let filteredModels = selected
-      ? modelData.filter(m => selected.split(',').map(s => s.trim()).includes(m.name))
-      : modelData;
-
-    if (!showAll) {
-      filteredModels = filteredModels.filter(m => !m.hidden);
+    function applyScores(version) {
+      const scores = scoresData[version] || {};
+      for (const m of modelData) {
+        m.score = scores[m.name] ?? null;
+      }
     }
-    filteredModels = filteredModels.filter(m => m.score != null);
 
-    const sortedData = [...filteredModels].sort((a, b) => b.score - a.score);
+    function getFilteredSorted() {
+      let filtered = selected
+        ? modelData.filter(m => selected.split(',').map(s => s.trim()).includes(m.name))
+        : modelData;
+      if (!showAll) filtered = filtered.filter(m => !m.hidden);
+      filtered = filtered.filter(m => m.score != null);
+      return [...filtered].sort((a, b) => b.score - a.score);
+    }
+
+    applyScores(currentVersion);
+    let sortedData = getFilteredSorted();
+
+    const toggleContainer = document.getElementById("version-toggle");
+    const renderToggle = () => {
+      toggleContainer.innerHTML = '';
+      for (const v of versions) {
+        const btn = document.createElement('button');
+        btn.textContent = v;
+        if (v === currentVersion) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+          if (v === currentVersion) return;
+          currentVersion = v;
+          applyScores(currentVersion);
+          sortedData = getFilteredSorted();
+          renderToggle();
+          renderChart();
+        });
+        toggleContainer.appendChild(btn);
+      }
+    };
+    if (versions.length > 1) renderToggle();
 
     // Helper: SVG path for a rect with only top corners rounded
     const roundedTopRect = (x, y, w, h, r) => {
@@ -233,12 +297,12 @@
     };
 
     const container = document.getElementById("chart-container");
-    const widestLabel = getWidestLabelWidth(sortedData);
-    const totalModels = sortedData.length;
 
     function renderChart() {
       container.innerHTML = '';
       const containerWidth = container.offsetWidth;
+      const widestLabel = getWidestLabelWidth(sortedData);
+      const totalModels = sortedData.length;
 
       const fontFamily = 'Inter, system-ui, sans-serif';
       const barColor = '#4e79a7';
@@ -371,7 +435,7 @@
 
     // Populate quotes grid
     const quotesGrid = document.getElementById("quotes-grid");
-    quotesData.forEach((quote) => {
+    (quotesData || []).forEach((quote) => {
       const quoteCard = document.createElement("div");
       quoteCard.className = "quote-card";
 

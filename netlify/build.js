@@ -15,15 +15,15 @@ const frontendDir = path.join(root, 'benchmarks', bench, 'frontend');
 
 const models = yaml.load(fs.readFileSync(path.join(dataDir, 'models.yaml'), 'utf8'));
 
-const scoresPath = path.join(dataDir, 'scores.yaml');
-if (fs.existsSync(scoresPath)) {
-  const scores = yaml.load(fs.readFileSync(scoresPath, 'utf8')) || {};
-  for (const m of models) {
-    if (m.name in scores) m.score = scores[m.name];
+const scores = {};
+for (const [variant, suffix] of [['v0', '.v0.yaml'], ['v1', '.yaml']]) {
+  const p = path.join(dataDir, `scores${suffix}`);
+  if (fs.existsSync(p)) {
+    scores[variant] = yaml.load(fs.readFileSync(p, 'utf8')) || {};
   }
 }
 
-const result = { models };
+const result = { models, scores };
 
 const quotesPath = path.join(dataDir, 'quotes.yaml');
 if (fs.existsSync(quotesPath)) {

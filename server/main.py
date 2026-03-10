@@ -42,14 +42,13 @@ def get_data(request: Request):
 
     models = yaml.safe_load(models_path.read_text())
 
-    scores_path = data_dir / "scores.yaml"
-    if scores_path.exists():
-        scores = yaml.safe_load(scores_path.read_text()) or {}
-        for m in models:
-            if m["name"] in scores:
-                m["score"] = scores[m["name"]]
+    scores = {}
+    for variant, suffix in [("v0", ".v0.yaml"), ("v1", ".yaml")]:
+        scores_path = data_dir / f"scores{suffix}"
+        if scores_path.exists():
+            scores[variant] = yaml.safe_load(scores_path.read_text()) or {}
 
-    result = {"models": models}
+    result = {"models": models, "scores": scores}
 
     quotes_path = data_dir / "quotes.yaml"
     if quotes_path.exists():
