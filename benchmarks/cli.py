@@ -172,7 +172,11 @@ def run(
             **inspect_args,
         )
 
-    _print_results(logs, models_yaml if not models and not test else None)
+    name_lookup = _model_name_lookup(models_yaml)
+    _print_results(logs, name_lookup)
+
+    if not test:
+        _save_scores(logs, bench_dir, name_lookup)
 
 
 def _is_thinking(entry: dict) -> bool:
@@ -180,34 +184,46 @@ def _is_thinking(entry: dict) -> bool:
     return bool(config.reasoning_effort) or bool(config.reasoning_tokens)
 
 
-def _print_results(logs, models_yaml):
-    from .models import resolve_models
+def _model_name_lookup(models_yaml):
+    from inspect_ai.model import GenerateConfig
 
-    name_lookup = {}
-    if models_yaml:
-        for e in resolve_models(models_yaml):
-            m = e["model"]
-            key = (e["id"], m.config.model_dump_json(exclude_none=True))
-            name_lookup[key] = e["name"]
+    from .models import model_configs
 
+    lookup = {}
+    for entry in model_configs(models_yaml):
+        gen = entry["generation_config"]
+        config = GenerateConfig(**gen) if gen else GenerateConfig()
+        key = (entry["id"], config.model_dump_json(exclude_none=True))
+        lookup[key] = entry["name"]
+    return lookup
+
+
+def _log_score(log):
+    metrics = log.results.scores[0].metrics
+    if "accuracy" in metrics:
+        return metrics["accuracy"].value, True
+    if "mean" in metrics:
+        return metrics["mean"].value, False
+    return next(iter(metrics.values())).value, False
+
+
+def _log_name(log, name_lookup):
+    key = (
+        log.eval.model,
+        log.eval.model_generate_config.model_dump_json(exclude_none=True),
+    )
+    return name_lookup.get(key, log.eval.model)
+
+
+def _print_results(logs, name_lookup):
     rows = []
     for log in logs:
-        key = (
-            log.eval.model,
-            log.eval.model_generate_config.model_dump_json(exclude_none=True),
-        )
-        display = name_lookup.get(key, log.eval.model)
+        name = _log_name(log, name_lookup)
         if log.status == "success" and log.results:
-            score = log.results.scores[0].metrics
-            if "accuracy" in score:
-                val = f"{score['accuracy'].value:.0%}"
-            elif "mean" in score:
-                val = f"{score['mean'].value:.1f}"
-            else:
-                val = str(next(iter(score.values())).value)
-            rows.append((display, val))
+            val, is_pct = _log_score(log)
+            rows.append((name, f"{val:.0%}" if is_pct else f"{val:.1f}"))
         else:
-            rows.append((display, log.status.upper()))
+            rows.append((name, log.status.upper()))
 
     if not rows:
         return
@@ -217,6 +233,42 @@ def _print_results(logs, models_yaml):
     click.echo()
     for model, result in rows:
         click.echo(f"  {model:<{width}} {result}")
+
+
+def _save_scores(logs, bench_dir, name_lookup):
+    import subprocess
+
+    import yaml
+
+    from .models import load_scores
+
+    data_dir = bench_dir / "data"
+    updates = {}
+    for log in logs:
+        if log.status != "success" or not log.results:
+            continue
+        name = _log_name(log, name_lookup)
+        val, is_pct = _log_score(log)
+        updates[name] = round(val * 100) if is_pct else round(val, 1)
+
+    if not updates:
+        return
+
+    scores = dict(sorted({**load_scores(data_dir), **updates}.items()))
+    (data_dir / "scores.yaml").write_text(
+        yaml.dump(scores, default_flow_style=False, allow_unicode=True)
+    )
+
+    result = subprocess.run(
+        ["node", str(REPO_ROOT / "netlify" / "build.js"), bench_dir.name],
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        click.echo(f"\n  Warning: build.js failed: {result.stderr.decode().strip()}")
+
+    click.echo(
+        f"\n  Scores saved: {', '.join(f'{n} ({v})' for n, v in sorted(updates.items()))}"
+    )
 
 
 @eval_group.command("list-models")
@@ -233,79 +285,3 @@ def list_models(benchmark):
         click.echo(f"{entry['name']:30s} {entry['id']}{config_str}")
 
 
-@eval_group.command("update-scores")
-@click.option("--benchmark", "-b", required=True, help="Benchmark name")
-@click.option("--log-dir", default="./logs")
-@click.option("--dry-run", is_flag=True, help="Print changes without writing")
-def update_scores(benchmark, log_dir, dry_run):
-    import yaml
-    from inspect_ai.log import list_eval_logs, read_eval_log
-
-    from .models import load_scores, resolve_models
-
-    bench_dir = resolve_benchmark(benchmark)
-    models_yaml = bench_dir / "data" / "models.yaml"
-    data_dir = bench_dir / "data"
-
-    name_lookup = {}
-    for e in resolve_models(models_yaml):
-        m = e["model"]
-        key = (e["id"], m.config.model_dump_json(exclude_none=True))
-        name_lookup[key] = e["name"]
-
-    logs = list_eval_logs(log_dir)
-    latest = {}
-    for header in logs:
-        log = read_eval_log(header.name)
-        if log.eval.task != benchmark:
-            continue
-        if log.status != "success" or not log.results:
-            continue
-
-        key = (
-            log.eval.model,
-            log.eval.model_generate_config.model_dump_json(exclude_none=True),
-        )
-        name = name_lookup.get(key)
-        if not name:
-            continue
-
-        ts = log.eval.created
-        if name in latest and latest[name][0] >= ts:
-            continue
-
-        score_metrics = log.results.scores[0].metrics
-        if "accuracy" in score_metrics:
-            val = round(score_metrics["accuracy"].value * 100)
-        elif "mean" in score_metrics:
-            val = round(score_metrics["mean"].value, 1)
-        else:
-            val = round(next(iter(score_metrics.values())).value, 2)
-
-        latest[name] = (ts, val)
-
-    existing = load_scores(data_dir)
-    new_scores = {**existing, **{name: val for name, (_, val) in latest.items()}}
-    new_scores = dict(sorted(new_scores.items()))
-
-    changes = []
-    for name in sorted(set(list(existing.keys()) + list(new_scores.keys()))):
-        old = existing.get(name)
-        new = new_scores.get(name)
-        if old != new:
-            changes.append((name, old, new))
-
-    if not changes:
-        click.echo("No score changes.")
-        return
-
-    for name, old, new in changes:
-        old_str = str(old) if old is not None else "—"
-        click.echo(f"  {name}: {old_str} → {new}")
-
-    if dry_run:
-        click.echo(f"\n  [dry-run] {len(changes)} change(s), not written.")
-    else:
-        scores_path = data_dir / "scores.yaml"
-        scores_path.write_text(yaml.dump(new_scores, default_flow_style=False, allow_unicode=True))
-        click.echo(f"\n  Updated {scores_path} ({len(changes)} change(s))")
