@@ -29,6 +29,7 @@ def model_configs(models_yaml: Path) -> list[dict]:
                 "id": model_id,
                 "name": m["name"],
                 "generation_config": gen_config,
+                "thinking": bool(m.get("thinking")),
             }
         )
     return results
@@ -44,6 +45,7 @@ def resolve_models(models_yaml: Path) -> list[dict]:
             {
                 "id": entry["id"],
                 "name": entry["name"],
+                "thinking": entry.get("thinking", False),
                 "model": model,
             }
         )

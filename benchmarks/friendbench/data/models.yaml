@@ -5,9 +5,10 @@
 
 - name: Sonnet 4.6 (thinking)
   id: anthropic/claude-sonnet-4-6
+  thinking: true
   date: 2026-02-17
   generation_config:
-    reasoning_effort: xhigh
+    reasoning_effort: medium
 
 - name: Opus 4.6
   date: 2026-02-04
@@ -15,9 +16,10 @@
 
 - name: Opus 4.6 (thinking)
   id: anthropic/claude-opus-4-6
+  thinking: true
   date: 2026-02-04
   generation_config:
-    reasoning_effort: xhigh
+    reasoning_effort: medium
 
 - name: Opus 4.5
   id: anthropic/claude-opus-4-5
@@ -25,6 +27,7 @@
 
 - name: Opus 4.5 (thinking)
   id: anthropic/claude-opus-4-5
+  thinking: true
   date: 2025-11-24
   generation_config:
     reasoning_tokens: 32000
@@ -35,6 +38,7 @@
 
 - name: Sonnet 4.5 (thinking)
   id: anthropic/claude-sonnet-4-5
+  thinking: true
   date: 2025-09-29
   generation_config:
     reasoning_tokens: 32000
@@ -45,6 +49,7 @@
 
 - name: Haiku 4.5 (thinking)
   id: anthropic/claude-haiku-4-5
+  thinking: true
   date: 2025-10-15
   generation_config:
     reasoning_tokens: 32000
@@ -55,6 +60,7 @@
 
 - name: Sonnet 4 (thinking)
   id: anthropic/claude-sonnet-4-0
+  thinking: true
   date: 2025-05-14
   generation_config:
     reasoning_tokens: 32000
@@ -65,6 +71,7 @@
 
 - name: Opus 4.1 (thinking)
   id: anthropic/claude-opus-4-1
+  thinking: true
   date: 2025-08-05
   generation_config:
     reasoning_tokens: 32000
@@ -75,11 +82,12 @@
 
 - name: Opus 4 (thinking)
   id: anthropic/claude-opus-4-0
+  thinking: true
   date: 2025-05-14
   generation_config:
     reasoning_tokens: 32000
 
-- name: Sonnet 3.7
+- name: Sonnet 3.7 (thinking)
 
 
 - name: Sonnet 3.6
@@ -92,57 +100,77 @@
   date: 2024-03-07
 
 # xAI
-- name: Grok 4
-  id: grok/grok-4
-
-- name: Grok 4.20
+- name: Grok 4.20 (thinking)
   # API not yet available — expected mid-to-late March 2026
   # id: grok/grok-4-20
+  thinking: true
 
-
-- name: Grok 4.1
+- name: Grok 4.1 fast
   id: grok/grok-4-1-fast-non-reasoning
 
+- name: Grok 4.1 fast (thinking)
+  id: grok/grok-4-1-fast-reasoning
+  thinking: true
 
-- name: Grok 3
+- name: Grok 4 fast
+  id: grok/grok-4-fast-non-reasoning
+
+- name: Grok 4 fast (thinking)
+  id: grok/grok-4-fast-reasoning
+  thinking: true
+
+- name: Grok 4 (thinking)
+  id: grok/grok-4-0709
+  thinking: true
+
+- name: Grok 3 (thinking)
   id: grok/grok-3
+  thinking: true
 
 # OpenAI
 - name: GPT 5.4 (thinking)
   id: openai/gpt-5.4
+  thinking: true
   generation_config:
-    reasoning_effort: high
+    reasoning_effort: medium
 
-- name: GPT 5.3 Chat
+- name: GPT 5.3
   id: openai/gpt-5.3-chat-latest
+  generation_config:
+    reasoning_effort: none
 
 - name: GPT 5.2
-  id: openai/gpt-5.2
+  id: openai/gpt-5.2-chat-latest
+  generation_config:
+    reasoning_effort: none
 
 - name: GPT 5.2 (thinking)
   id: openai/gpt-5.2
+  thinking: true
   generation_config:
-    reasoning_effort: high
+    reasoning_effort: medium
 
 - name: GPT 5.1
-  id: openai/gpt-5.1
+  id: openai/gpt-5.1-chat-latest
   generation_config:
     reasoning_effort: none
 
 - name: GPT 5.1 (thinking)
   id: openai/gpt-5.1
+  thinking: true
   generation_config:
-    reasoning_effort: high
+    reasoning_effort: medium
 
 - name: GPT 5
-  id: openai/gpt-5
+  id: openai/gpt-5-chat-latest
   generation_config:
     reasoning_effort: none
 
 - name: GPT 5 (thinking)
   id: openai/gpt-5
+  thinking: true
   generation_config:
-    reasoning_effort: high
+    reasoning_effort: medium
 
 - name: GPT 4.5
 
@@ -154,16 +182,24 @@
 - name: GPT 4o
   id: openai/gpt-4o
 
-- name: o3-mini (thinking)
+- name: o3-mini
   id: openai/o3-mini
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
-
-- name: o4-mini (thinking)
+- name: o4-mini
   id: openai/o4-mini
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
-
-- name: o3 (thinking)
+- name: o3
   id: openai/o3
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
+
 
 - name: GPT-3.5-turbo
 
@@ -171,25 +207,42 @@
 - name: DeepSeek V3
   id: openai-api/deepseek/deepseek-chat
 
-
-- name: R1 (thinking)
+- name: R1
   id: openrouter/deepseek/deepseek-r1
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
-- name: R1 0528 (thinking)
+- name: R1 (new)
   id: openrouter/deepseek/deepseek-r1-0528
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
+- name: DeepSeek V3.2 Speciale
+  id: openrouter/deepseek/deepseek-v3.2-speciale
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 # Google
-- name: Gemini 2.5 Pro (thinking)
+- name: Gemini 2.5 Pro
   id: openrouter/google/gemini-2.5-pro
-
-- name: Gemini 3 Pro (thinking)
-  id: openrouter/google/gemini-3-pro-preview
+  thinking: true
   generation_config:
-    reasoning_effort: high
+    reasoning_effort: medium
 
-- name: Gemini 3.1 Pro (thinking)
+- name: Gemini 3 Pro
+  id: openrouter/google/gemini-3-pro-preview
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
+
+- name: Gemini 3.1 Pro
   id: openrouter/google/gemini-3.1-pro-preview
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 # Open Source (via OpenRouter)
 - name: Llama 4 Maverick
@@ -210,10 +263,16 @@
 
 - name: Qwen3 235B
   id: openrouter/qwen/qwen3-235b-a22b
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: QwQ 32B
   id: openrouter/qwen/qwq-32b
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: Qwen 2.5 72B
@@ -230,34 +289,50 @@
 
 - name: Qwen3.5 397B
   id: openrouter/qwen/qwen3.5-397b-a17b
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: Qwen3.5 27B
   id: openrouter/qwen/qwen3.5-27b
-
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 - name: Kimi K2.5
   id: openrouter/moonshotai/kimi-k2.5
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: GLM-5
   id: openrouter/z-ai/glm-5
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: MiniMax M2.5
   id: openrouter/minimax/minimax-m2.5
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: Seed 1.6
   id: openrouter/bytedance-seed/seed-1.6
-
-
-- name: DeepSeek V3.2 Speciale
-  id: openrouter/deepseek/deepseek-v3.2-speciale
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: Qwen3.5 122B
   id: openrouter/qwen/qwen3.5-122b-a10b
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: Llama 3.1 70B
@@ -266,6 +341,9 @@
 
 - name: MiMo V2 Flash
   id: openrouter/xiaomi/mimo-v2-flash
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: OLMo 3.1 32B
@@ -274,22 +352,37 @@
 
 - name: Nemotron 3 Nano 30B
   id: openrouter/nvidia/nemotron-3-nano-30b-a3b
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: Solar Pro 3
   id: openrouter/upstage/solar-pro-3
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: Step 3.5 Flash
   id: openrouter/stepfun/step-3.5-flash
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: Seed 2.0 Mini
   id: openrouter/bytedance-seed/seed-2.0-mini
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: GLM-4.7
   id: openrouter/z-ai/glm-4.7
+  thinking: true
+  generation_config:
+    reasoning_effort: medium
 
 
 - name: Devstral 2

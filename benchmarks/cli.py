@@ -181,8 +181,14 @@ def run(
 
 
 def _is_thinking(entry: dict) -> bool:
+    if "thinking" in entry:
+        return bool(entry["thinking"])
+
     config = entry["model"].config
-    return bool(config.reasoning_effort) or bool(config.reasoning_tokens)
+    return (
+        config.reasoning_effort not in (None, "none")
+        or bool(config.reasoning_tokens)
+    )
 
 
 def _model_name_lookup(models_yaml):
@@ -284,5 +290,4 @@ def list_models(benchmark):
         gen = entry["generation_config"]
         config_str = f"  ({gen})" if gen else ""
         click.echo(f"{entry['name']:30s} {entry['id']}{config_str}")
-
 

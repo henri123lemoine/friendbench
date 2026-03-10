@@ -306,6 +306,10 @@
       }
     }
 
+    function baseModelName(model) {
+      return model.name.replace(/ \(thinking\)$/, '');
+    }
+
     function getGroupedData() {
       let filtered = selected
         ? modelData.filter(m => selected.split(',').map(s => s.trim()).includes(m.name))
@@ -315,8 +319,8 @@
 
       const groups = new Map();
       for (const m of filtered) {
-        const isThinking = m.name.endsWith(' (thinking)');
-        const baseName = isThinking ? m.name.replace(/ \(thinking\)$/, '') : m.name;
+        const isThinking = Boolean(m.thinking);
+        const baseName = baseModelName(m);
         if (!groups.has(baseName)) {
           groups.set(baseName, { name: baseName, baseScore: null, thinkingScore: null });
         }
