@@ -108,9 +108,6 @@
   id: grok/grok-3
 
 # OpenAI
-- name: GPT 5
-  id: openai/gpt-5
-
 - name: GPT 5.4 (thinking)
   id: openai/gpt-5.4
   generation_config:
@@ -137,8 +134,17 @@
   generation_config:
     reasoning_effort: high
 
+- name: GPT 5
+  id: openai/gpt-5
+  generation_config:
+    reasoning_effort: none
+
+- name: GPT 5 (thinking)
+  id: openai/gpt-5
+  generation_config:
+    reasoning_effort: high
+
 - name: GPT 4.5
-  id: openai/gpt-4.5-preview
 
 
 - name: GPT 4o (old)
@@ -148,45 +154,41 @@
 - name: GPT 4o
   id: openai/gpt-4o
 
-- name: o3-mini (high)
+- name: o3-mini (thinking)
   id: openai/o3-mini
 
 
-- name: o4-mini (high)
+- name: o4-mini (thinking)
   id: openai/o4-mini
 
 
-- name: o3
+- name: o3 (thinking)
   id: openai/o3
 
 - name: GPT-3.5-turbo
-  id: openai/gpt-3.5-turbo-instruct
 
 # DeepSeek
 - name: DeepSeek V3
   id: openai-api/deepseek/deepseek-chat
 
 
-- name: R1
-  id: openai-api/deepseek/deepseek-reasoner
+- name: R1 (thinking)
+  id: openrouter/deepseek/deepseek-r1
 
-- name: R1 (new)
-  id: openai-api/deepseek/deepseek-reasoner
+- name: R1 0528 (thinking)
+  id: openrouter/deepseek/deepseek-r1-0528
 
 
 # Google
-- name: Gemini 2.5 Pro
+- name: Gemini 2.5 Pro (thinking)
   id: openrouter/google/gemini-2.5-pro
-
-- name: Gemini 3 Pro
-  id: openrouter/google/gemini-3-pro-preview
 
 - name: Gemini 3 Pro (thinking)
   id: openrouter/google/gemini-3-pro-preview
   generation_config:
     reasoning_effort: high
 
-- name: Gemini 3.1 Pro
+- name: Gemini 3.1 Pro (thinking)
   id: openrouter/google/gemini-3.1-pro-preview
 
 # Open Source (via OpenRouter)
