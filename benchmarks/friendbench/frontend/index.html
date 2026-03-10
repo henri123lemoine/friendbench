@@ -169,6 +169,58 @@
       font-weight: 600;
     }
 
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin: 30px 0;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .results-table th {
+      background: #f1f3f5;
+      padding: 10px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: #555;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #dee2e6;
+    }
+
+    .results-table td {
+      padding: 8px 16px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .results-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .results-table tr:hover {
+      background: #f8f9fa;
+    }
+
+    .results-table .num {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    .results-table .rank {
+      color: #999;
+      font-size: 12px;
+      text-align: center;
+      width: 30px;
+    }
+
+    .results-table .delta-pos { color: #2e7d32; }
+    .results-table .delta-neg { color: #c62828; }
+    .results-table .na { color: #ccc; }
+
     @media (max-width: 600px) {
       body {
         padding: 10px;
@@ -176,6 +228,15 @@
 
       .quotes-grid {
         grid-template-columns: 1fr;
+      }
+
+      .results-table {
+        font-size: 12px;
+      }
+
+      .results-table th,
+      .results-table td {
+        padding: 6px 8px;
       }
     }
   </style>
@@ -185,6 +246,7 @@
   <div class="container">
     <div id="version-toggle" class="version-toggle"></div>
     <div id="chart-container"></div>
+    <div id="table-container"></div>
     <div class="quotes-section">
       <h2 class="quotes-title">Some thoughts from our High Taste Testers™</h2>
       <div id="quotes-grid" class="quotes-grid"></div>
@@ -231,17 +293,36 @@
       }
     }
 
-    function getFilteredSorted() {
+    function getGroupedData() {
       let filtered = selected
         ? modelData.filter(m => selected.split(',').map(s => s.trim()).includes(m.name))
         : modelData;
       if (!showAll) filtered = filtered.filter(m => !m.hidden);
       filtered = filtered.filter(m => m.score != null);
-      return [...filtered].sort((a, b) => b.score - a.score);
+
+      const groups = new Map();
+      for (const m of filtered) {
+        const isThinking = m.name.endsWith(' (thinking)');
+        const baseName = isThinking ? m.name.replace(/ \(thinking\)$/, '') : m.name;
+        if (!groups.has(baseName)) {
+          groups.set(baseName, { name: baseName, baseScore: null, thinkingScore: null });
+        }
+        const g = groups.get(baseName);
+        if (isThinking) g.thinkingScore = m.score;
+        else g.baseScore = m.score;
+      }
+
+      return [...groups.values()]
+        .filter(g => g.baseScore != null || g.thinkingScore != null)
+        .sort((a, b) => {
+          const aMax = Math.max(a.baseScore ?? -1, a.thinkingScore ?? -1);
+          const bMax = Math.max(b.baseScore ?? -1, b.thinkingScore ?? -1);
+          return bMax - aMax;
+        });
     }
 
     applyScores(currentVersion);
-    let sortedData = getFilteredSorted();
+    let groupedData = getGroupedData();
 
     const toggleContainer = document.getElementById("version-toggle");
     const renderToggle = () => {
@@ -254,9 +335,10 @@
           if (v === currentVersion) return;
           currentVersion = v;
           applyScores(currentVersion);
-          sortedData = getFilteredSorted();
+          groupedData = getGroupedData();
           renderToggle();
           renderChart();
+          renderTable();
         });
         toggleContainer.appendChild(btn);
       }
@@ -289,20 +371,34 @@
       return width;
     };
 
-    // Find widest model name - measure the joined version since horizontal mode joins lines
-    const getWidestLabelWidth = (models) => {
-      return Math.max(...models.map(m => {
-        return measureSvgTextWidth(m.name, 12);
-      }));
+    const getWidestLabelWidth = (groups) => {
+      return Math.max(...groups.map(g => measureSvgTextWidth(g.name, 12)));
     };
 
-    const container = document.getElementById("chart-container");
+    const chartContainer = document.getElementById("chart-container");
+    const tableContainer = document.getElementById("table-container");
+
+    function buildTooltip(group) {
+      if (group.baseScore != null && group.thinkingScore != null)
+        return `${group.name} \u2014 Base: ${group.baseScore}, Thinking: ${group.thinkingScore}`;
+      if (group.baseScore != null) return `${group.name}: ${group.baseScore}`;
+      return `${group.name}: ${group.thinkingScore} (thinking only)`;
+    }
+
+    function scoreLabel(group) {
+      if (group.baseScore != null && group.thinkingScore != null)
+        return `${group.baseScore} \u2192 ${group.thinkingScore}`;
+      return `${group.baseScore ?? group.thinkingScore}`;
+    }
 
     function renderChart() {
-      container.innerHTML = '';
-      const containerWidth = container.offsetWidth;
-      const widestLabel = getWidestLabelWidth(sortedData);
-      const totalModels = sortedData.length;
+      chartContainer.innerHTML = '';
+      if (groupedData.length === 0) return;
+
+      const containerWidth = chartContainer.offsetWidth;
+      const widestLabel = getWidestLabelWidth(groupedData);
+      const totalGroups = groupedData.length;
+      const hasThinking = groupedData.some(g => g.thinkingScore != null);
 
       const fontFamily = 'Inter, system-ui, sans-serif';
       const barColor = '#4e79a7';
@@ -319,17 +415,18 @@
       const subtitleFontSize = 13;
       const titleY = titleFontSize + 10;
       const subtitleY = titleY + subtitleFontSize + 8;
-      const headerHeight = subtitleY + 15;
+      const legendHeight = hasThinking ? 25 : 0;
+      const headerHeight = subtitleY + 15 + legendHeight;
 
       const bottomMargin = useHorizontalLayout ? 35 : 100;
-      const horizontalChartHeight = headerHeight + (totalModels * (barHeight + barSpacing)) + barSpacing + bottomMargin;
+      const horizontalChartHeight = headerHeight + (totalGroups * (barHeight + barSpacing)) + barSpacing + bottomMargin;
       const chartHeight = useHorizontalLayout ? horizontalChartHeight : chartWidth / 1.7;
 
       const config = {
         width: chartWidth,
         height: chartHeight,
         margin: useHorizontalLayout
-          ? { top: headerHeight, right: 50, bottom: bottomMargin, left: horizontalLeftMargin }
+          ? { top: headerHeight, right: 80, bottom: bottomMargin, left: horizontalLeftMargin }
           : { top: headerHeight, right: 80, bottom: 100, left: 80 },
       };
 
@@ -342,29 +439,49 @@
       const chartAreaHeight = config.height - config.margin.top - config.margin.bottom;
       const chartAreaWidth = config.width - config.margin.left - config.margin.right;
 
-      const headerSvg = `
+      let headerSvg = `
         <text x="${config.width / 2}" y="${titleY}"
               font-family="${fontFamily}" font-size="${titleFontSize}" font-weight="bold"
-              text-anchor="middle" fill="#333">FriendBench™</text>
+              text-anchor="middle" fill="#333">FriendBench\u2122</text>
         <text x="${config.width / 2}" y="${subtitleY}"
               font-family="${fontFamily}" font-size="${subtitleFontSize}"
               text-anchor="middle" fill="#666">A systematic assessment of amicability in large language models</text>
       `;
 
+      if (hasThinking) {
+        const legendY = subtitleY + 20;
+        headerSvg += `
+          <rect x="${config.width / 2 - 75}" y="${legendY - 9}" width="10" height="10" rx="2" fill="${barColor}" />
+          <text x="${config.width / 2 - 61}" y="${legendY}" font-family="${fontFamily}" font-size="11" fill="#888">Base</text>
+          <rect x="${config.width / 2 + 10}" y="${legendY - 9}" width="10" height="10" rx="2" fill="${barColor}" opacity="0.35" />
+          <text x="${config.width / 2 + 24}" y="${legendY}" font-family="${fontFamily}" font-size="11" fill="#888">Thinking</text>
+        `;
+      }
+
       if (useHorizontalLayout) {
         let barsSvg = '';
-        sortedData.forEach((model, i) => {
+        groupedData.forEach((group, i) => {
           const y = config.margin.top + barSpacing + i * (barHeight + barSpacing);
-          const hBarWidth = (model.score / 100) * chartAreaWidth;
-          barsSvg += `
-            <text x="${config.margin.left - labelBarGap}" y="${y + barHeight / 2 + 4}"
-                  font-family="${fontFamily}" font-size="12" text-anchor="end" fill="#333">${model.name}</text>
-            <path d="${roundedRightRect(config.margin.left, y, hBarWidth, barHeight, 4)}" fill="${barColor}">
-              <title>${model.name}: ${model.score}</title>
-            </path>
-            <text x="${config.margin.left + hBarWidth + 6}" y="${y + barHeight / 2 + 4}"
-                  font-family="${fontFamily}" font-size="11" text-anchor="start" fill="#555">${model.score}</text>
-          `;
+          const baseW = group.baseScore != null ? (group.baseScore / 100) * chartAreaWidth : 0;
+          const thinkW = group.thinkingScore != null ? (group.thinkingScore / 100) * chartAreaWidth : 0;
+          const maxW = Math.max(baseW, thinkW);
+
+          barsSvg += `<text x="${config.margin.left - labelBarGap}" y="${y + barHeight / 2 + 4}"
+                font-family="${fontFamily}" font-size="12" text-anchor="end" fill="#333">${group.name}</text>`;
+
+          if (group.thinkingScore != null) {
+            barsSvg += `<path d="${roundedRightRect(config.margin.left, y, thinkW, barHeight, 4)}" fill="${barColor}" opacity="0.35" />`;
+          }
+          if (group.baseScore != null) {
+            barsSvg += `<path d="${roundedRightRect(config.margin.left, y, baseW, barHeight, 4)}" fill="${barColor}" />`;
+          }
+
+          barsSvg += `<rect x="${config.margin.left}" y="${y}" width="${maxW}" height="${barHeight}" fill="transparent">
+            <title>${buildTooltip(group)}</title>
+          </rect>`;
+
+          barsSvg += `<text x="${config.margin.left + maxW + 6}" y="${y + barHeight / 2 + 4}"
+                font-family="${fontFamily}" font-size="11" text-anchor="start" fill="#555">${scoreLabel(group)}</text>`;
         });
 
         svg.innerHTML = headerSvg + `
@@ -381,26 +498,36 @@
         `;
       } else {
         let barsSvg = '';
-        const vBarWidth = Math.min(100, chartAreaWidth / (totalModels + 1) - 10);
-        const totalBarsWidth = vBarWidth * totalModels;
-        const spacing = (chartAreaWidth - totalBarsWidth) / (totalModels + 1);
+        const vBarWidth = Math.min(100, chartAreaWidth / (totalGroups + 1) - 10);
+        const totalBarsWidth = vBarWidth * totalGroups;
+        const spacing = (chartAreaWidth - totalBarsWidth) / (totalGroups + 1);
 
-        sortedData.forEach((model, i) => {
+        groupedData.forEach((group, i) => {
           const x = config.margin.left + spacing + i * (vBarWidth + spacing);
-          const vBarHeight = (model.score / 100) * chartAreaHeight;
-          const y = config.height - config.margin.bottom - vBarHeight;
+          const baseH = group.baseScore != null ? (group.baseScore / 100) * chartAreaHeight : 0;
+          const thinkH = group.thinkingScore != null ? (group.thinkingScore / 100) * chartAreaHeight : 0;
+          const maxH = Math.max(baseH, thinkH);
           const barCenter = x + vBarWidth / 2;
           const labelX = barCenter + 12;
           const labelY = config.height - config.margin.bottom + 14;
 
-          barsSvg += `
-            <path d="${roundedTopRect(x, y, vBarWidth, vBarHeight, 4)}" fill="${barColor}">
-              <title>${model.name}: ${model.score}</title>
-            </path>
-            <text x="${labelX}" y="${labelY}"
-                  font-family="${fontFamily}" font-size="11" text-anchor="end" fill="#333"
-                  transform="rotate(-45, ${labelX}, ${labelY})">${model.name}</text>
-          `;
+          if (group.thinkingScore != null) {
+            const yPos = config.height - config.margin.bottom - thinkH;
+            barsSvg += `<path d="${roundedTopRect(x, yPos, vBarWidth, thinkH, 4)}" fill="${barColor}" opacity="0.35" />`;
+          }
+          if (group.baseScore != null) {
+            const yPos = config.height - config.margin.bottom - baseH;
+            barsSvg += `<path d="${roundedTopRect(x, yPos, vBarWidth, baseH, 4)}" fill="${barColor}" />`;
+          }
+
+          const hoverY = config.height - config.margin.bottom - maxH;
+          barsSvg += `<rect x="${x}" y="${hoverY}" width="${vBarWidth}" height="${maxH}" fill="transparent">
+            <title>${buildTooltip(group)}</title>
+          </rect>`;
+
+          barsSvg += `<text x="${labelX}" y="${labelY}"
+                font-family="${fontFamily}" font-size="11" text-anchor="end" fill="#333"
+                transform="rotate(-45, ${labelX}, ${labelY})">${group.name}</text>`;
         });
 
         svg.innerHTML = headerSvg + `
@@ -422,10 +549,46 @@
         `;
       }
 
-      container.appendChild(svg);
+      chartContainer.appendChild(svg);
+    }
+
+    function renderTable() {
+      tableContainer.innerHTML = '';
+      if (groupedData.length === 0) return;
+
+      const hasThinking = groupedData.some(g => g.thinkingScore != null);
+
+      let html = '<table class="results-table"><thead><tr>';
+      html += '<th class="rank">#</th><th>Model</th><th class="num">Score</th>';
+      if (hasThinking) {
+        html += '<th class="num">Thinking</th><th class="num">Delta</th>';
+      }
+      html += '</tr></thead><tbody>';
+
+      groupedData.forEach((group, i) => {
+        html += '<tr>';
+        html += `<td class="rank">${i + 1}</td>`;
+        html += `<td>${group.name}</td>`;
+        html += `<td class="num">${group.baseScore != null ? group.baseScore : '<span class="na">\u2014</span>'}</td>`;
+        if (hasThinking) {
+          html += `<td class="num">${group.thinkingScore != null ? group.thinkingScore : '<span class="na">\u2014</span>'}</td>`;
+          if (group.baseScore != null && group.thinkingScore != null) {
+            const delta = group.thinkingScore - group.baseScore;
+            const cls = delta > 0 ? 'delta-pos' : delta < 0 ? 'delta-neg' : '';
+            html += `<td class="num ${cls}">${delta > 0 ? '+' : ''}${delta}</td>`;
+          } else {
+            html += '<td class="num"><span class="na">\u2014</span></td>';
+          }
+        }
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+      tableContainer.innerHTML = html;
     }
 
     renderChart();
+    renderTable();
 
     let resizeTimeout;
     window.addEventListener('resize', () => {
@@ -450,7 +613,7 @@
       const authorText = quote.url
         ? `<a href="${quote.url}" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; text-decoration: underline; text-decoration-style: dotted;">${quote.author}</a>`
         : quote.author;
-      attribution.innerHTML = `— ${authorText}`;
+      attribution.innerHTML = `\u2014 ${authorText}`;
 
       // Add model reference (either inline or as icon)
       if (quote.models && quote.models.length > 0) {
