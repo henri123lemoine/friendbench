@@ -29,8 +29,20 @@
       margin: 0 auto;
     }
 
+    .bottom-section {
+      display: flex;
+      gap: 30px;
+      margin-top: 20px;
+    }
+
     .quotes-section {
-      padding: 20px;
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+    }
+
+    .table-section {
+      flex: 0 0 auto;
     }
 
     .quotes-title {
@@ -42,10 +54,9 @@
     }
 
     .quotes-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-      gap: 30px;
-      margin-bottom: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
     .quote-card {
@@ -139,26 +150,26 @@
       display: flex;
       justify-content: center;
       gap: 0;
-      margin-bottom: 16px;
+      margin: 8px 0 16px;
     }
 
     .version-toggle button {
-      padding: 6px 16px;
-      border: 1px solid #ccc;
+      padding: 3px 10px;
+      border: 1px solid #ddd;
       background: white;
       font-family: Inter, system-ui, sans-serif;
-      font-size: 13px;
+      font-size: 11px;
       cursor: pointer;
-      color: #666;
+      color: #999;
       transition: all 0.15s ease;
     }
 
     .version-toggle button:first-child {
-      border-radius: 6px 0 0 6px;
+      border-radius: 4px 0 0 4px;
     }
 
     .version-toggle button:last-child {
-      border-radius: 0 6px 6px 0;
+      border-radius: 0 4px 4px 0;
       border-left: none;
     }
 
@@ -217,17 +228,17 @@
       width: 30px;
     }
 
-    .results-table .delta-pos { color: #2e7d32; }
-    .results-table .delta-neg { color: #c62828; }
-    .results-table .na { color: #ccc; }
+    .results-table .na { color: #ccc; font-style: normal; }
+
+    @media (max-width: 900px) {
+      .bottom-section {
+        flex-direction: column;
+      }
+    }
 
     @media (max-width: 600px) {
       body {
         padding: 10px;
-      }
-
-      .quotes-grid {
-        grid-template-columns: 1fr;
       }
 
       .results-table {
@@ -244,12 +255,14 @@
 
 <body>
   <div class="container">
-    <div id="version-toggle" class="version-toggle"></div>
     <div id="chart-container"></div>
-    <div id="table-container"></div>
-    <div class="quotes-section">
-      <h2 class="quotes-title">Some thoughts from our High Taste Testers™</h2>
-      <div id="quotes-grid" class="quotes-grid"></div>
+    <div id="version-toggle" class="version-toggle"></div>
+    <div class="bottom-section">
+      <div class="quotes-section">
+        <h2 class="quotes-title">Some thoughts from our High Taste Testers™</h2>
+        <div id="quotes-grid" class="quotes-grid"></div>
+      </div>
+      <div id="table-container" class="table-section"></div>
     </div>
   </div>
 
@@ -284,7 +297,7 @@
     const selected = params.get('models');
     const showAll = params.get('showAll') === 'true';
     const versions = Object.keys(scoresData);
-    let currentVersion = params.get('v') || versions[0] || 'v0';
+    let currentVersion = params.get('v') || versions[versions.length - 1] || 'v1';
 
     function applyScores(version) {
       const scores = scoresData[version] || {};
@@ -372,7 +385,7 @@
     };
 
     const getWidestLabelWidth = (groups) => {
-      return Math.max(...groups.map(g => measureSvgTextWidth(g.name, 12)));
+      return Math.max(...groups.map(g => measureSvgTextWidth(g.name, 10)));
     };
 
     const chartContainer = document.getElementById("chart-container");
@@ -415,8 +428,7 @@
       const subtitleFontSize = 13;
       const titleY = titleFontSize + 10;
       const subtitleY = titleY + subtitleFontSize + 8;
-      const legendHeight = hasThinking ? 25 : 0;
-      const headerHeight = subtitleY + 15 + legendHeight;
+      const headerHeight = subtitleY + 15 + (hasThinking && useHorizontalLayout ? 20 : 0);
 
       const bottomMargin = useHorizontalLayout ? 35 : 100;
       const horizontalChartHeight = headerHeight + (totalGroups * (barHeight + barSpacing)) + barSpacing + bottomMargin;
@@ -449,12 +461,14 @@
       `;
 
       if (hasThinking) {
-        const legendY = subtitleY + 20;
+        const legendX = config.width - config.margin.right;
+        const legendY1 = useHorizontalLayout ? subtitleY + 22 : config.margin.top + 14;
+        const legendY2 = legendY1 + 14;
         headerSvg += `
-          <rect x="${config.width / 2 - 75}" y="${legendY - 9}" width="10" height="10" rx="2" fill="${barColor}" />
-          <text x="${config.width / 2 - 61}" y="${legendY}" font-family="${fontFamily}" font-size="11" fill="#888">Base</text>
-          <rect x="${config.width / 2 + 10}" y="${legendY - 9}" width="10" height="10" rx="2" fill="${barColor}" opacity="0.35" />
-          <text x="${config.width / 2 + 24}" y="${legendY}" font-family="${fontFamily}" font-size="11" fill="#888">Thinking</text>
+          <rect x="${legendX - 60}" y="${legendY1 - 9}" width="10" height="10" rx="2" fill="${barColor}" />
+          <text x="${legendX - 46}" y="${legendY1}" font-family="${fontFamily}" font-size="10" fill="#888">Base</text>
+          <rect x="${legendX - 60}" y="${legendY2 - 9}" width="10" height="10" rx="2" fill="${barColor}" opacity="0.35" />
+          <text x="${legendX - 46}" y="${legendY2}" font-family="${fontFamily}" font-size="10" fill="#888">Thinking</text>
         `;
       }
 
@@ -467,7 +481,7 @@
           const maxW = Math.max(baseW, thinkW);
 
           barsSvg += `<text x="${config.margin.left - labelBarGap}" y="${y + barHeight / 2 + 4}"
-                font-family="${fontFamily}" font-size="12" text-anchor="end" fill="#333">${group.name}</text>`;
+                font-family="${fontFamily}" font-size="10" text-anchor="end" fill="#333">${group.name}</text>`;
 
           if (group.thinkingScore != null) {
             barsSvg += `<path d="${roundedRightRect(config.margin.left, y, thinkW, barHeight, 4)}" fill="${barColor}" opacity="0.35" />`;
@@ -526,7 +540,7 @@
           </rect>`;
 
           barsSvg += `<text x="${labelX}" y="${labelY}"
-                font-family="${fontFamily}" font-size="11" text-anchor="end" fill="#333"
+                font-family="${fontFamily}" font-size="9" text-anchor="end" fill="#333"
                 transform="rotate(-45, ${labelX}, ${labelY})">${group.name}</text>`;
         });
 
@@ -561,7 +575,7 @@
       let html = '<table class="results-table"><thead><tr>';
       html += '<th class="rank">#</th><th>Model</th><th class="num">Score</th>';
       if (hasThinking) {
-        html += '<th class="num">Thinking</th><th class="num">Delta</th>';
+        html += '<th class="num">Thinking</th>';
       }
       html += '</tr></thead><tbody>';
 
@@ -572,13 +586,6 @@
         html += `<td class="num">${group.baseScore != null ? group.baseScore : '<span class="na">\u2014</span>'}</td>`;
         if (hasThinking) {
           html += `<td class="num">${group.thinkingScore != null ? group.thinkingScore : '<span class="na">\u2014</span>'}</td>`;
-          if (group.baseScore != null && group.thinkingScore != null) {
-            const delta = group.thinkingScore - group.baseScore;
-            const cls = delta > 0 ? 'delta-pos' : delta < 0 ? 'delta-neg' : '';
-            html += `<td class="num ${cls}">${delta > 0 ? '+' : ''}${delta}</td>`;
-          } else {
-            html += '<td class="num"><span class="na">\u2014</span></td>';
-          }
         }
         html += '</tr>';
       });
