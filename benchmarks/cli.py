@@ -246,39 +246,172 @@ def _print_results(logs, name_lookup):
 def _print_costs(logs):
     from collections import defaultdict
 
-    fields = ("input", "output", "cache_read", "cache_write", "total_cost")
-    provider_costs = defaultdict(lambda: dict.fromkeys(fields, 0.0))
+    prices = _load_prices()
+    grader_model = None
+
+    def _new_row():
+        return {"input": 0, "output": 0, "cost": 0.0, "new_cost": 0.0, "has_unpriced": False}
+
+    provider_rows = defaultdict(_new_row)
+    grader_row = _new_row()
+    rate_cache = {}
+
+    fresh_usage = defaultdict(lambda: {"input": 0, "output": 0})
+    for log in logs:
+        if log.stats and log.stats.model_usage:
+            for mid, u in log.stats.model_usage.items():
+                fresh_usage[mid]["input"] += u.input_tokens
+                fresh_usage[mid]["output"] += u.output_tokens
 
     for log in logs:
-        if not log.stats or not log.stats.model_usage:
+        if not log.samples:
             continue
-        for model_id, usage in log.stats.model_usage.items():
-            provider = model_id.split("/")[0]
-            p = provider_costs[provider]
-            p["input"] += usage.input_tokens
-            p["output"] += usage.output_tokens
-            p["cache_read"] += usage.input_tokens_cache_read or 0
-            p["cache_write"] += usage.input_tokens_cache_write or 0
-            if usage.total_cost is not None:
-                p["total_cost"] += usage.total_cost
+        subject = log.eval.model
+        for sample in log.samples:
+            for ev in sample.events:
+                if type(ev).__name__ != "ModelEvent":
+                    continue
+                if not (ev.output and ev.output.usage):
+                    continue
+                u = ev.output.usage
+                model_id = ev.model
+                is_grader = model_id != subject
+                if is_grader:
+                    grader_model = grader_model or model_id
+                row = grader_row if is_grader else provider_rows[model_id.split("/")[0]]
+                row["input"] += u.input_tokens
+                row["output"] += u.output_tokens
+                if model_id not in rate_cache:
+                    rate_cache[model_id] = _lookup_price(prices, model_id)
+                    if not rate_cache[model_id]:
+                        row["has_unpriced"] = True
+                rate = rate_cache[model_id]
+                if rate:
+                    row["cost"] += u.input_tokens * rate[0] + u.output_tokens * rate[1]
 
-    if not provider_costs:
+    for model_id, usage in fresh_usage.items():
+        rate = rate_cache.get(model_id) or _lookup_price(prices, model_id)
+        if not rate:
+            continue
+        is_grader = model_id == grader_model
+        row = grader_row if is_grader else provider_rows[model_id.split("/")[0]]
+        row["new_cost"] += usage["input"] * rate[0] + usage["output"] * rate[1]
+
+    if not provider_rows:
         return
 
-    click.echo("\n  Cost breakdown by provider:")
-    total = 0.0
-    width = max(len(p) for p in provider_costs) + 2
-    for provider, d in sorted(provider_costs.items(), key=lambda x: -x[1]["total_cost"]):
-        total += d["total_cost"]
-        cost_str = f"${d['total_cost']:.2f}" if d["total_cost"] else "n/a"
-        inp = d["input"] / 1_000_000
-        out = d["output"] / 1_000_000
-        parts = [f"{inp:.1f}M in", f"{out:.1f}M out"]
-        if d["cache_read"]:
-            parts.append(f"{d['cache_read'] / 1_000_000:.1f}M cached")
-        click.echo(f"    {provider:<{width}} {cost_str:>8}  ({', '.join(parts)})")
-    click.echo(f"    {'total':<{width}} {'$' + f'{total:.2f}':>8}")
+    def _fmt_tokens(n):
+        return f"{n / 1e6:.1f}M" if n >= 1e6 else f"{n / 1e3:.0f}K"
+
+    def _fmt(row):
+        prefix = "~" if row["has_unpriced"] else " "
+        cost_str = f"{prefix}${row['cost']:7.2f}" if row["cost"] or not row["has_unpriced"] else "      n/a"
+        tokens = f"({_fmt_tokens(row['input'])} in, {_fmt_tokens(row['output'])} out)"
+        if row["new_cost"] < row["cost"]:
+            return f"{cost_str}  (${row['new_cost']:.2f} new)  {tokens}"
+        return f"{cost_str}  {tokens}"
+
+    all_rows = sorted(provider_rows.items(), key=lambda x: -x[1]["cost"])
+    if grader_model:
+        all_rows.append(("grader", grader_row))
+
+    width = max(len(label) for label, _ in all_rows) + 2
+    total_cost = sum(row["cost"] for _, row in all_rows)
+    total_new = sum(row["new_cost"] for _, row in all_rows)
+    any_unpriced = any(row["has_unpriced"] for _, row in all_rows)
+
+    click.echo("\n  Cost estimate by provider:")
+    for label, row in all_rows:
+        suffix = f"  ({grader_model})" if label == "grader" else ""
+        click.echo(f"    {label:<{width}} {_fmt(row)}{suffix}")
+    prefix = "~" if any_unpriced else ""
+    click.echo(f"    {'total':<{width}} {prefix}${total_cost:>6.2f}", nl=False)
+    if total_new < total_cost:
+        click.echo(f"  (${total_new:.2f} new)")
+    else:
+        click.echo()
     click.echo()
+
+
+_LITELLM_PRICES_URL = (
+    "https://raw.githubusercontent.com/BerriAI/litellm"
+    "/main/model_prices_and_context_window.json"
+)
+_OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models"
+_PROVIDER_REMAP = {"grok": "xai"}
+
+
+def _load_prices():
+    import json
+    import time
+    import urllib.request
+
+    cache_dir = DEFAULT_INSPECT_CACHE_DIR
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    def _fetch_cached(url, filename, transform):
+        path = cache_dir / filename
+        try:
+            if path.exists() and (time.time() - path.stat().st_mtime) / 3600 < 24:
+                return json.loads(path.read_text())
+            data = transform(json.loads(urllib.request.urlopen(url, timeout=5).read()))
+            path.write_text(json.dumps(data))
+            return data
+        except Exception:
+            return json.loads(path.read_text()) if path.exists() else {}
+
+    litellm = _fetch_cached(_LITELLM_PRICES_URL, "model_prices.json", lambda d: d)
+    openrouter = _fetch_cached(
+        _OPENROUTER_MODELS_URL,
+        "openrouter_prices.json",
+        lambda d: {
+            "openrouter/" + m["id"]: {
+                "input_cost_per_token": float(m["pricing"]["prompt"]),
+                "output_cost_per_token": float(m["pricing"]["completion"]),
+            }
+            for m in d["data"]
+            if m.get("pricing")
+        },
+    )
+    return {**litellm, **openrouter}
+
+
+def _lookup_price(prices, model_id):
+    if not prices:
+        return None
+    parts = model_id.split("/", 1)
+    candidates = [model_id]
+    if len(parts) == 2:
+        provider, rest = parts
+        candidates.append(rest)
+        if provider in _PROVIDER_REMAP:
+            candidates.append(_PROVIDER_REMAP[provider] + "/" + rest)
+    for key in candidates:
+        if key in prices:
+            return _extract_rate(prices[key])
+        if (match := _fuzzy_match(prices, key)):
+            return _extract_rate(prices[match])
+    return None
+
+
+def _extract_rate(entry):
+    return entry.get("input_cost_per_token", 0), entry.get("output_cost_per_token", 0)
+
+
+import re
+
+_DATE_SUFFIX_RE = re.compile(r".+-\d{4,}")
+
+
+def _fuzzy_match(prices, name):
+    bases = [name]
+    if name.endswith("-0"):
+        bases.append(name[:-2])
+    for base in bases:
+        for key in prices:
+            if key.startswith(base + "-") and _DATE_SUFFIX_RE.fullmatch(key):
+                return key
+    return None
 
 
 def _save_scores(logs, bench_dir, name_lookup):
