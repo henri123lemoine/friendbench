@@ -246,17 +246,21 @@ def _print_results(logs, name_lookup):
 def _print_costs(logs):
     from collections import defaultdict
 
-    provider_costs = defaultdict(lambda: {"input": 0, "output": 0, "total_cost": 0.0})
+    fields = ("input", "output", "cache_read", "cache_write", "total_cost")
+    provider_costs = defaultdict(lambda: dict.fromkeys(fields, 0.0))
 
     for log in logs:
         if not log.stats or not log.stats.model_usage:
             continue
         for model_id, usage in log.stats.model_usage.items():
             provider = model_id.split("/")[0]
-            provider_costs[provider]["input"] += usage.input_tokens
-            provider_costs[provider]["output"] += usage.output_tokens
+            p = provider_costs[provider]
+            p["input"] += usage.input_tokens
+            p["output"] += usage.output_tokens
+            p["cache_read"] += usage.input_tokens_cache_read or 0
+            p["cache_write"] += usage.input_tokens_cache_write or 0
             if usage.total_cost is not None:
-                provider_costs[provider]["total_cost"] += usage.total_cost
+                p["total_cost"] += usage.total_cost
 
     if not provider_costs:
         return
@@ -264,13 +268,15 @@ def _print_costs(logs):
     click.echo("\n  Cost breakdown by provider:")
     total = 0.0
     width = max(len(p) for p in provider_costs) + 2
-    for provider, data in sorted(provider_costs.items(), key=lambda x: -x[1]["total_cost"]):
-        cost = data["total_cost"]
-        total += cost
-        inp = data["input"] / 1_000_000
-        out = data["output"] / 1_000_000
-        cost_str = f"${cost:.2f}" if cost else "n/a"
-        click.echo(f"    {provider:<{width}} {cost_str:>8}  ({inp:.1f}M in, {out:.1f}M out)")
+    for provider, d in sorted(provider_costs.items(), key=lambda x: -x[1]["total_cost"]):
+        total += d["total_cost"]
+        cost_str = f"${d['total_cost']:.2f}" if d["total_cost"] else "n/a"
+        inp = d["input"] / 1_000_000
+        out = d["output"] / 1_000_000
+        parts = [f"{inp:.1f}M in", f"{out:.1f}M out"]
+        if d["cache_read"]:
+            parts.append(f"{d['cache_read'] / 1_000_000:.1f}M cached")
+        click.echo(f"    {provider:<{width}} {cost_str:>8}  ({', '.join(parts)})")
     click.echo(f"    {'total':<{width}} {'$' + f'{total:.2f}':>8}")
     click.echo()
 
