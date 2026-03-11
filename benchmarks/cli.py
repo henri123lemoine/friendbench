@@ -175,6 +175,7 @@ def run(
 
     name_lookup = _model_name_lookup(models_yaml)
     _print_results(logs, name_lookup)
+    _print_costs(logs)
 
     if not test:
         _save_scores(logs, bench_dir, name_lookup)
@@ -240,6 +241,38 @@ def _print_results(logs, name_lookup):
     click.echo()
     for model, result in rows:
         click.echo(f"  {model:<{width}} {result}")
+
+
+def _print_costs(logs):
+    from collections import defaultdict
+
+    provider_costs = defaultdict(lambda: {"input": 0, "output": 0, "total_cost": 0.0})
+
+    for log in logs:
+        if not log.stats or not log.stats.model_usage:
+            continue
+        for model_id, usage in log.stats.model_usage.items():
+            provider = model_id.split("/")[0]
+            provider_costs[provider]["input"] += usage.input_tokens
+            provider_costs[provider]["output"] += usage.output_tokens
+            if usage.total_cost is not None:
+                provider_costs[provider]["total_cost"] += usage.total_cost
+
+    if not provider_costs:
+        return
+
+    click.echo("\n  Cost breakdown by provider:")
+    total = 0.0
+    width = max(len(p) for p in provider_costs) + 2
+    for provider, data in sorted(provider_costs.items(), key=lambda x: -x[1]["total_cost"]):
+        cost = data["total_cost"]
+        total += cost
+        inp = data["input"] / 1_000_000
+        out = data["output"] / 1_000_000
+        cost_str = f"${cost:.2f}" if cost else "n/a"
+        click.echo(f"    {provider:<{width}} {cost_str:>8}  ({inp:.1f}M in, {out:.1f}M out)")
+    click.echo(f"    {'total':<{width}} {'$' + f'{total:.2f}':>8}")
+    click.echo()
 
 
 def _save_scores(logs, bench_dir, name_lookup):
