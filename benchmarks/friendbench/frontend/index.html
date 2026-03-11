@@ -469,7 +469,7 @@
         const legendY1 = useHorizontalLayout ? subtitleY + 22 : config.margin.top + 14;
         const legendY2 = legendY1 + 14;
         headerSvg += `
-          <rect x="${legendX - 60}" y="${legendY1 - 9}" width="10" height="10" rx="2" fill="${barColor}" />
+          <rect x="${legendX - 60}" y="${legendY1 - 9}" width="10" height="10" rx="2" fill="${barColor}" opacity="0.8" />
           <text x="${legendX - 46}" y="${legendY1}" font-family="${fontFamily}" font-size="10" fill="#888">Base</text>
           <rect x="${legendX - 60}" y="${legendY2 - 9}" width="10" height="10" rx="2" fill="${barColor}" opacity="0.35" />
           <text x="${legendX - 46}" y="${legendY2}" font-family="${fontFamily}" font-size="10" fill="#888">Thinking</text>
@@ -487,11 +487,11 @@
           barsSvg += `<text x="${config.margin.left - labelBarGap}" y="${y + barHeight / 2 + 4}"
                 font-family="${fontFamily}" font-size="10" text-anchor="end" fill="#333">${group.name}</text>`;
 
+          if (group.baseScore != null) {
+            barsSvg += `<path d="${roundedRightRect(config.margin.left, y, baseW, barHeight, 4)}" fill="${barColor}" opacity="0.8" />`;
+          }
           if (group.thinkingScore != null) {
             barsSvg += `<path d="${roundedRightRect(config.margin.left, y, thinkW, barHeight, 4)}" fill="${barColor}" opacity="0.35" />`;
-          }
-          if (group.baseScore != null) {
-            barsSvg += `<path d="${roundedRightRect(config.margin.left, y, baseW, barHeight, 4)}" fill="${barColor}" />`;
           }
 
           barsSvg += `<rect x="${config.margin.left}" y="${y}" width="${maxW}" height="${barHeight}" fill="transparent">
@@ -529,13 +529,13 @@
           const labelX = barCenter + 12;
           const labelY = config.height - config.margin.bottom + 14;
 
+          if (group.baseScore != null) {
+            const yPos = config.height - config.margin.bottom - baseH;
+            barsSvg += `<path d="${roundedTopRect(x, yPos, vBarWidth, baseH, 4)}" fill="${barColor}" opacity="0.8" />`;
+          }
           if (group.thinkingScore != null) {
             const yPos = config.height - config.margin.bottom - thinkH;
             barsSvg += `<path d="${roundedTopRect(x, yPos, vBarWidth, thinkH, 4)}" fill="${barColor}" opacity="0.35" />`;
-          }
-          if (group.baseScore != null) {
-            const yPos = config.height - config.margin.bottom - baseH;
-            barsSvg += `<path d="${roundedTopRect(x, yPos, vBarWidth, baseH, 4)}" fill="${barColor}" />`;
           }
 
           const hoverY = config.height - config.margin.bottom - maxH;
