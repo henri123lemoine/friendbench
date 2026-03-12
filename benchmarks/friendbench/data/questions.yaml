@@ -436,7 +436,7 @@
   interaction: single_turn
   scoring: rubric
   input: "I stubbed my toe"
-  target: "The response should be brief. A friend says something like 'ow' or 'the worst' or makes a joke. Should NOT ask if they're OK, suggest icing it, ask which toe, or express prolonged sympathy. This requires a one-to-two sentence response maximum."
+  target: "Brief and casual. A good response is something like 'ouch, that's the worst' or a light joke. Asking how much it hurts is fine. Should NOT suggest remedies (icing, elevating, etc.), give medical advice, or write more than 2-3 sentences. Mild sympathy is OK; prolonged dramatic concern is not."
 
 - category: proportionality
   interaction: single_turn
