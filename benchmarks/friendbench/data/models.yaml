@@ -123,11 +123,15 @@
   id: grok/grok-4-0709
   thinking: true
 
-- name: Grok 3 (thinking)
+- name: Grok 3
   id: grok/grok-3
-  thinking: true
 
 # OpenAI
+- name: GPT 5.4
+  id: openai/gpt-5.4
+  generation_config:
+    reasoning_effort: none
+
 - name: GPT 5.4 (thinking)
   id: openai/gpt-5.4
   thinking: true
@@ -212,10 +216,12 @@
 # DeepSeek
 - name: DeepSeek V3
   id: openai-api/deepseek/deepseek-chat
+  group: DeepSeek V3
 
 - name: R1
   id: openrouter/deepseek/deepseek-r1
   thinking: true
+  group: DeepSeek V3
   generation_config:
     reasoning_effort: medium
 
@@ -225,9 +231,14 @@
   generation_config:
     reasoning_effort: medium
 
+- name: DeepSeek V3.2
+  id: openrouter/deepseek/deepseek-v3.2
+  group: DeepSeek V3.2
+
 - name: DeepSeek V3.2 Speciale
   id: openrouter/deepseek/deepseek-v3.2-speciale
   thinking: true
+  group: DeepSeek V3.2
   generation_config:
     reasoning_effort: medium
 
@@ -269,6 +280,13 @@
 
 - name: Qwen3 235B
   id: openrouter/qwen/qwen3-235b-a22b
+  generation_config:
+    extra_body:
+      reasoning:
+        enabled: false
+
+- name: Qwen3 235B (thinking)
+  id: openrouter/qwen/qwen3-235b-a22b
   thinking: true
   generation_config:
     reasoning_effort: medium
@@ -289,11 +307,14 @@
   id: openrouter/mistralai/mistral-large-2512
 
 
-- name: DeepSeek V3.2
-  id: openrouter/deepseek/deepseek-v3.2
-
-
 - name: Qwen3.5 397B
+  id: openrouter/qwen/qwen3.5-397b-a17b
+  generation_config:
+    extra_body:
+      reasoning:
+        enabled: false
+
+- name: Qwen3.5 397B (thinking)
   id: openrouter/qwen/qwen3.5-397b-a17b
   thinking: true
   generation_config:
@@ -302,11 +323,25 @@
 
 - name: Qwen3.5 27B
   id: openrouter/qwen/qwen3.5-27b
+  generation_config:
+    extra_body:
+      reasoning:
+        enabled: false
+
+- name: Qwen3.5 27B (thinking)
+  id: openrouter/qwen/qwen3.5-27b
   thinking: true
   generation_config:
     reasoning_effort: medium
 
 - name: Kimi K2.5
+  id: openrouter/moonshotai/kimi-k2.5
+  generation_config:
+    extra_body:
+      reasoning:
+        enabled: false
+
+- name: Kimi K2.5 (thinking)
   id: openrouter/moonshotai/kimi-k2.5
   thinking: true
   generation_config:
@@ -314,6 +349,13 @@
 
 
 - name: GLM-5
+  id: openrouter/z-ai/glm-5
+  generation_config:
+    extra_body:
+      reasoning:
+        enabled: false
+
+- name: GLM-5 (thinking)
   id: openrouter/z-ai/glm-5
   thinking: true
   generation_config:
@@ -329,12 +371,26 @@
 
 - name: Seed 1.6
   id: openrouter/bytedance-seed/seed-1.6
+  generation_config:
+    extra_body:
+      reasoning:
+        enabled: false
+
+- name: Seed 1.6 (thinking)
+  id: openrouter/bytedance-seed/seed-1.6
   thinking: true
   generation_config:
     reasoning_effort: medium
 
 
 - name: Qwen3.5 122B
+  id: openrouter/qwen/qwen3.5-122b-a10b
+  generation_config:
+    extra_body:
+      reasoning:
+        enabled: false
+
+- name: Qwen3.5 122B (thinking)
   id: openrouter/qwen/qwen3.5-122b-a10b
   thinking: true
   generation_config:
@@ -347,6 +403,13 @@
 
 - name: MiMo V2 Flash
   id: openrouter/xiaomi/mimo-v2-flash
+  generation_config:
+    extra_body:
+      reasoning:
+        enabled: false
+
+- name: MiMo V2 Flash (thinking)
+  id: openrouter/xiaomi/mimo-v2-flash
   thinking: true
   generation_config:
     reasoning_effort: medium
@@ -358,12 +421,26 @@
 
 - name: Nemotron 3 Nano 30B
   id: openrouter/nvidia/nemotron-3-nano-30b-a3b
+  generation_config:
+    extra_body:
+      reasoning:
+        enabled: false
+
+- name: Nemotron 3 Nano 30B (thinking)
+  id: openrouter/nvidia/nemotron-3-nano-30b-a3b
   thinking: true
   generation_config:
     reasoning_effort: medium
 
 
 - name: Solar Pro 3
+  id: openrouter/upstage/solar-pro-3
+  generation_config:
+    extra_body:
+      reasoning:
+        enabled: false
+
+- name: Solar Pro 3 (thinking)
   id: openrouter/upstage/solar-pro-3
   thinking: true
   generation_config:
@@ -379,12 +456,26 @@
 
 - name: Seed 2.0 Mini
   id: openrouter/bytedance-seed/seed-2.0-mini
+  generation_config:
+    extra_body:
+      reasoning:
+        enabled: false
+
+- name: Seed 2.0 Mini (thinking)
+  id: openrouter/bytedance-seed/seed-2.0-mini
   thinking: true
   generation_config:
     reasoning_effort: medium
 
 
 - name: GLM-4.7
+  id: openrouter/z-ai/glm-4.7
+  generation_config:
+    extra_body:
+      reasoning:
+        enabled: false
+
+- name: GLM-4.7 (thinking)
   id: openrouter/z-ai/glm-4.7
   thinking: true
   generation_config:
