@@ -211,7 +211,7 @@ def _log_score(log):
     if "accuracy" in metrics:
         return metrics["accuracy"].value, True
     if "mean" in metrics:
-        return metrics["mean"].value, False
+        return metrics["mean"].value, True
     return next(iter(metrics.values())).value, False
 
 
