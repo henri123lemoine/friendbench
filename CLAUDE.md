@@ -18,8 +18,11 @@ LitBench is standalone (no inspect_ai, just `run.py`).
 
 ## CLI
 
+Run commands with `uv run`:
+
 ```bash
-bench eval run -b friendbench
-bench eval run -b friendbench --category sycophancy --multi-turn
-bench eval list-models -b friendbench
+uv run bench eval run -b friendbench
+uv run bench eval run -b friendbench --category sycophancy --multi-turn
+uv run bench eval list-models -b friendbench
+uv run bench analyze run -b friendbench
 ```
