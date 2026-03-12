@@ -463,3 +463,53 @@ def list_models(benchmark):
         config_str = f"  ({gen})" if gen else ""
         click.echo(f"{entry['name']:30s} {entry['id']}{config_str}")
 
+
+@bench.group("analyze")
+def analyze_group():
+    pass
+
+
+@analyze_group.command("run")
+@click.option(
+    "--benchmark",
+    "-b",
+    required=True,
+    help="Benchmark name (e.g. friendbench)",
+)
+@click.option("--log-dir", default="./logs")
+@click.option("--output-dir", default="./analysis")
+@click.option("--no-plot", is_flag=True, help="Skip generating plots")
+@click.option(
+    "--expected-samples",
+    default=100,
+    type=int,
+    help="Filter to logs with this many completed samples",
+)
+def analyze_run(benchmark, log_dir, output_dir, no_plot, expected_samples):
+    import importlib
+
+    from .analyze import build_matrix, load_latest_logs
+    from .models import load_models
+
+    bench_dir = resolve_benchmark(benchmark)
+    models_yaml = bench_dir / "data" / "models.yaml"
+
+    click.echo(f"\n  Loading {benchmark} logs from {log_dir}...")
+    logs = load_latest_logs(log_dir, benchmark, expected_samples)
+    if not logs:
+        raise click.ClickException(
+            f"No {benchmark} logs with {expected_samples} samples found in {log_dir}"
+        )
+
+    name_lookup = _model_name_lookup(models_yaml)
+    matrix, question_meta = build_matrix(logs, name_lookup)
+
+    mod = importlib.import_module(f"benchmarks.{benchmark}.analyze")
+    mod.run_analysis(
+        matrix,
+        question_meta,
+        load_models(models_yaml),
+        Path(output_dir),
+        no_plot=no_plot,
+    )
+
