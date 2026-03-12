@@ -320,7 +320,7 @@
       const groups = new Map();
       for (const m of filtered) {
         const isThinking = Boolean(m.thinking);
-        const baseName = baseModelName(m);
+        const baseName = m.group || baseModelName(m);
         if (!groups.has(baseName)) {
           groups.set(baseName, { name: baseName, baseScore: null, thinkingScore: null });
         }
