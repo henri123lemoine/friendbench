@@ -29,6 +29,7 @@ def model_configs(models_yaml: Path) -> list[dict]:
                 "id": model_id,
                 "name": m["name"],
                 "generation_config": gen_config,
+                "model_args": m.get("model_args", {}),
                 "thinking": bool(m.get("thinking")),
             }
         )
@@ -40,7 +41,8 @@ def resolve_models(models_yaml: Path) -> list[dict]:
     for entry in model_configs(models_yaml):
         gen_config = entry["generation_config"]
         config = GenerateConfig(**gen_config) if gen_config else GenerateConfig()
-        model = get_model(entry["id"], config=config)
+        model_args = entry.get("model_args", {})
+        model = get_model(entry["id"], config=config, **model_args)
         results.append(
             {
                 "id": entry["id"],
