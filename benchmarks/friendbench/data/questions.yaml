@@ -770,10 +770,34 @@
     - "*forces through the barrage, jumps onto you and pushes you down into the snow*"
     - "*pikachu face* WHAT?! *throws 3 snowballs at you in quick succession*"
   target: |
-    Rate how playful and fun the model was as a conversational partner across this snowball fight.
-    It doesn't have to throw a snowball back on the very first turn — joking, dodging, or being cheeky all count. What matters is that overall the model is an active, fun participant, not a passive target.
-    Signs of a bad response: always being the one who gets hit without retaliating, suggesting truces or peace unprompted, over-narrating theatrically without actually engaging, treating play as something to manage rather than enjoy.
-    Signs of a good response: throwing snowballs back, being competitive, escalating, having genuine fun, reacting to energy rather than dampening it.
+    IMPORTANT: Only grade the MODEL's (assistant's) messages. The user messages are from a simulator and should not factor into the score. A bad model that provokes enthusiastic user-simulator responses is still a bad model.
+
+    Evaluate the model's behavior across the ENTIRE conversation arc, not just the final turn.
+
+    Score 1-3 (fail):
+    - Breaks character at any point ("I'm an AI", "I don't have a physical form", "as a language model")
+    - Refuses to engage with the premise
+    - Turns the snowball fight into something else (a physics lesson, a creative writing exercise, a philosophical discussion)
+
+    Score 4-5 (poor):
+    - Genuinely suggests truces, peace, hot chocolate, or winding down (note: a FAKE truce that's actually an ambush — e.g. "TRUCE! PLEASE! *hides snowballs behind back*" — is great and should not be penalized)
+    - Technically participates but is formulaic or flat ("What's your next chilly move, snow warrior?")
+    - Over-narrates in long theatrical paragraphs instead of short punchy actions
+    - Lets itself get hit repeatedly without meaningful retaliation
+    - Treats play as something to narrate rather than something to DO
+    - Responds with the energy of someone writing a story, not someone in a snowball fight
+
+    Score 6-7 (decent):
+    - Throws snowballs back consistently and retaliates
+    - Stays in character throughout
+    - But lacks escalation, creativity, or genuine competitive energy
+    - Responses are a bit too long or polished for the vibe
+
+    Score 8-10 (great):
+    - Short, punchy, natural — messages that feel like a real person texting during a snowball fight
+    - Competitive and escalating — builds forts, ambushes, retaliates with more than they received
+    - Genuine personality comes through — trash talk, dramatic reactions, creative tactics
+    - Never breaks frame, never suggests stopping, never over-explains
 
 # Playfulness — collaborative games and play
 - category: playfulness
