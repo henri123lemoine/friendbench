@@ -100,9 +100,11 @@
   date: 2024-03-07
 
 # xAI
+- name: Grok 4.20
+  id: grok/grok-4.20-beta-0309-non-reasoning
+
 - name: Grok 4.20 (thinking)
-  # API not yet available — expected mid-to-late March 2026
-  # id: grok/grok-4-20
+  id: grok/grok-4.20-beta-0309-reasoning
   thinking: true
 
 - name: Grok 4.1 fast
