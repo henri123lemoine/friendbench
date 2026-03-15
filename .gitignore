@@ -11,3 +11,5 @@ benchmarks/litbench/results/
 data.json
 .xdg-data/
 .inspect-cache/
+
+benchmarks/friendbench/analysis/log_index.json
