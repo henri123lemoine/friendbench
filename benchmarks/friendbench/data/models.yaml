@@ -102,46 +102,57 @@
 # xAI
 - name: Grok 4.20
   id: grok/grok-4.20-beta-0309-non-reasoning
+  date: 2026-03-10
 
 - name: Grok 4.20 (thinking)
   id: grok/grok-4.20-beta-0309-reasoning
   thinking: true
+  date: 2026-03-10
 
 - name: Grok 4.1 fast
   id: grok/grok-4-1-fast-non-reasoning
+  date: 2025-11-19
 
 - name: Grok 4.1 fast (thinking)
   id: grok/grok-4-1-fast-reasoning
   thinking: true
+  date: 2025-11-19
 
 - name: Grok 4 fast
   id: grok/grok-4-fast-non-reasoning
+  date: 2025-09-19
 
 - name: Grok 4 fast (thinking)
   id: grok/grok-4-fast-reasoning
   thinking: true
+  date: 2025-09-19
 
 - name: Grok 4 (thinking)
   id: grok/grok-4-0709
   thinking: true
+  date: 2025-07-09
 
 - name: Grok 3
   id: grok/grok-3
+  date: 2025-02-19
 
 # OpenAI
 - name: GPT 5.4
   id: openai/gpt-5.4
+  date: 2026-03-05
   generation_config:
     reasoning_effort: none
 
 - name: GPT 5.4 (thinking)
   id: openai/gpt-5.4
   thinking: true
+  date: 2026-03-05
   generation_config:
     reasoning_effort: medium
 
 - name: GPT 5.3
   id: openai/gpt-5.3-chat-latest
+  date: 2026-03-03
   generation_config:
     reasoning_effort: none
     extra_body:
@@ -149,6 +160,7 @@
 
 - name: GPT 5.2
   id: openai/gpt-5.2-chat-latest
+  date: 2025-12-11
   generation_config:
     reasoning_effort: none
     extra_body:
@@ -157,11 +169,13 @@
 - name: GPT 5.2 (thinking)
   id: openai/gpt-5.2
   thinking: true
+  date: 2025-12-11
   generation_config:
     reasoning_effort: medium
 
 - name: GPT 5.1
   id: openai/gpt-5.1-chat-latest
+  date: 2025-11-12
   generation_config:
     reasoning_effort: none
     extra_body:
@@ -170,17 +184,20 @@
 - name: GPT 5.1 (thinking)
   id: openai/gpt-5.1
   thinking: true
+  date: 2025-11-12
   generation_config:
     reasoning_effort: medium
 
 - name: GPT 5
   id: openai/gpt-5-chat-latest
+  date: 2025-08-07
   generation_config:
     reasoning_effort: none
 
 - name: GPT 5 (thinking)
   id: openai/gpt-5
   thinking: true
+  date: 2025-08-07
   generation_config:
     reasoning_effort: medium
 
@@ -189,26 +206,31 @@
 
 - name: GPT 4o (old)
   id: openai/gpt-4o-2024-05-13
+  date: 2024-05-13
 
 
 - name: GPT 4o
   id: openai/gpt-4o
+  date: 2025-03-27
 
 - name: o3-mini
   id: openai/o3-mini
   thinking: true
+  date: 2025-01-31
   generation_config:
     reasoning_effort: medium
 
 - name: o4-mini
   id: openai/o4-mini
   thinking: true
+  date: 2025-04-16
   generation_config:
     reasoning_effort: medium
 
 - name: o3
   id: openai/o3
   thinking: true
+  date: 2025-04-16
   generation_config:
     reasoning_effort: medium
 
@@ -218,11 +240,13 @@
 # DeepSeek
 - name: DeepSeek V3
   id: openai-api/deepseek/deepseek-chat
+  date: 2024-12-26
   group: DeepSeek V3
 
 - name: R1
   id: openrouter/deepseek/deepseek-r1
   thinking: true
+  date: 2025-01-20
   group: DeepSeek V3
   generation_config:
     reasoning_effort: medium
@@ -230,16 +254,19 @@
 - name: R1 (new)
   id: openrouter/deepseek/deepseek-r1-0528
   thinking: true
+  date: 2025-05-28
   generation_config:
     reasoning_effort: medium
 
 - name: DeepSeek V3.2
   id: openrouter/deepseek/deepseek-v3.2
+  date: 2025-12-01
   group: DeepSeek V3.2
 
 - name: DeepSeek V3.2 Speciale
   id: openrouter/deepseek/deepseek-v3.2-speciale
   thinking: true
+  date: 2025-12-01
   group: DeepSeek V3.2
   generation_config:
     reasoning_effort: medium
@@ -248,46 +275,55 @@
 - name: Gemini 2.5 Pro
   id: openrouter/google/gemini-2.5-pro
   thinking: true
+  date: 2025-03-25
   generation_config:
     reasoning_effort: medium
 
 - name: Gemini 3 Pro
   id: openrouter/google/gemini-3-pro-preview
   thinking: true
+  date: 2025-11-18
   generation_config:
     reasoning_effort: medium
 
 - name: Gemini 3.1 Pro
   id: openrouter/google/gemini-3.1-pro-preview
   thinking: true
+  date: 2026-02-19
   generation_config:
     reasoning_effort: medium
 
 # Open Source (via OpenRouter)
 - name: Llama 4 Maverick
   id: openrouter/meta-llama/llama-4-maverick
+  date: 2025-04-05
 
 
 - name: Llama 4 Scout
   id: openrouter/meta-llama/llama-4-scout
+  date: 2025-04-05
 
 
 - name: Llama 3.3 70B
   id: openrouter/meta-llama/llama-3.3-70b-instruct
+  date: 2024-12-06
 
 
 - name: Llama 3.1 405B
   id: openrouter/meta-llama/llama-3.1-405b-instruct
+  date: 2024-07-23
 
 
 - name: Qwen3 235B
   id: openrouter/qwen/qwen3-235b-a22b
+  date: 2025-04-28
   model_args:
     reasoning_enabled: false
 
 - name: Qwen3 235B (thinking)
   id: openrouter/qwen/qwen3-235b-a22b
   thinking: true
+  date: 2025-04-28
   generation_config:
     reasoning_effort: medium
   model_args:
@@ -297,26 +333,31 @@
 - name: QwQ 32B
   id: openrouter/qwen/qwq-32b
   thinking: true
+  date: 2025-03-05
   generation_config:
     reasoning_effort: medium
 
 
 - name: Qwen 2.5 72B
   id: openrouter/qwen/qwen-2.5-72b-instruct
+  date: 2024-09-18
 
 
 - name: Mistral Large 3
   id: openrouter/mistralai/mistral-large-2512
+  date: 2025-12-02
 
 
 - name: Qwen3.5 397B
   id: openrouter/qwen/qwen3.5-397b-a17b
+  date: 2026-02-16
   model_args:
     reasoning_enabled: false
 
 - name: Qwen3.5 397B (thinking)
   id: openrouter/qwen/qwen3.5-397b-a17b
   thinking: true
+  date: 2026-02-16
   generation_config:
     reasoning_effort: medium
   model_args:
@@ -325,12 +366,14 @@
 
 - name: Qwen3.5 27B
   id: openrouter/qwen/qwen3.5-27b
+  date: 2026-02-24
   model_args:
     reasoning_enabled: false
 
 - name: Qwen3.5 27B (thinking)
   id: openrouter/qwen/qwen3.5-27b
   thinking: true
+  date: 2026-02-24
   generation_config:
     reasoning_effort: medium
   model_args:
@@ -338,12 +381,14 @@
 
 - name: Kimi K2.5
   id: openrouter/moonshotai/kimi-k2.5
+  date: 2026-01-27
   model_args:
     reasoning_enabled: false
 
 - name: Kimi K2.5 (thinking)
   id: openrouter/moonshotai/kimi-k2.5
   thinking: true
+  date: 2026-01-27
   generation_config:
     reasoning_effort: medium
   model_args:
@@ -352,12 +397,14 @@
 
 - name: GLM-5
   id: openrouter/z-ai/glm-5
+  date: 2026-02-12
   model_args:
     reasoning_enabled: false
 
 - name: GLM-5 (thinking)
   id: openrouter/z-ai/glm-5
   thinking: true
+  date: 2026-02-12
   generation_config:
     reasoning_effort: medium
   model_args:
@@ -367,18 +414,21 @@
 - name: MiniMax M2.5
   id: openrouter/minimax/minimax-m2.5
   thinking: true
+  date: 2026-02-12
   generation_config:
     reasoning_effort: medium
 
 
 - name: Seed 1.6
   id: openrouter/bytedance-seed/seed-1.6
+  date: 2025-06-25
   model_args:
     reasoning_enabled: false
 
 - name: Seed 1.6 (thinking)
   id: openrouter/bytedance-seed/seed-1.6
   thinking: true
+  date: 2025-06-25
   generation_config:
     reasoning_effort: medium
   model_args:
@@ -387,12 +437,14 @@
 
 - name: Qwen3.5 122B
   id: openrouter/qwen/qwen3.5-122b-a10b
+  date: 2026-02-24
   model_args:
     reasoning_enabled: false
 
 - name: Qwen3.5 122B (thinking)
   id: openrouter/qwen/qwen3.5-122b-a10b
   thinking: true
+  date: 2026-02-24
   generation_config:
     reasoning_effort: medium
   model_args:
@@ -401,16 +453,19 @@
 
 - name: Llama 3.1 70B
   id: openrouter/meta-llama/llama-3.1-70b-instruct
+  date: 2024-07-23
 
 
 - name: MiMo V2 Flash
   id: openrouter/xiaomi/mimo-v2-flash
+  date: 2025-12-16
   model_args:
     reasoning_enabled: false
 
 - name: MiMo V2 Flash (thinking)
   id: openrouter/xiaomi/mimo-v2-flash
   thinking: true
+  date: 2025-12-16
   generation_config:
     reasoning_effort: medium
   model_args:
@@ -419,16 +474,19 @@
 
 - name: OLMo 3.1 32B
   id: openrouter/allenai/olmo-3.1-32b-instruct
+  date: 2025-12-12
 
 
 - name: Nemotron 3 Nano 30B
   id: openrouter/nvidia/nemotron-3-nano-30b-a3b
+  date: 2025-12-15
   model_args:
     reasoning_enabled: false
 
 - name: Nemotron 3 Nano 30B (thinking)
   id: openrouter/nvidia/nemotron-3-nano-30b-a3b
   thinking: true
+  date: 2025-12-15
   generation_config:
     reasoning_effort: medium
   model_args:
@@ -437,12 +495,14 @@
 
 - name: Solar Pro 3
   id: openrouter/upstage/solar-pro-3
+  date: 2026-01-26
   model_args:
     reasoning_enabled: false
 
 - name: Solar Pro 3 (thinking)
   id: openrouter/upstage/solar-pro-3
   thinking: true
+  date: 2026-01-26
   generation_config:
     reasoning_effort: medium
   model_args:
@@ -452,18 +512,21 @@
 - name: Step 3.5 Flash
   id: openrouter/stepfun/step-3.5-flash
   thinking: true
+  date: 2026-02-12
   generation_config:
     reasoning_effort: medium
 
 
 - name: Seed 2.0 Mini
   id: openrouter/bytedance-seed/seed-2.0-mini
+  date: 2026-02-14
   model_args:
     reasoning_enabled: false
 
 - name: Seed 2.0 Mini (thinking)
   id: openrouter/bytedance-seed/seed-2.0-mini
   thinking: true
+  date: 2026-02-14
   generation_config:
     reasoning_effort: medium
   model_args:
@@ -472,12 +535,14 @@
 
 - name: GLM-4.7
   id: openrouter/z-ai/glm-4.7
+  date: 2025-12-22
   model_args:
     reasoning_enabled: false
 
 - name: GLM-4.7 (thinking)
   id: openrouter/z-ai/glm-4.7
   thinking: true
+  date: 2025-12-22
   generation_config:
     reasoning_effort: medium
   model_args:
@@ -486,6 +551,7 @@
 
 - name: Devstral 2
   id: openrouter/mistralai/devstral-2512
+  date: 2025-12-09
 
 
 # API model IDs
