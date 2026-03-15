@@ -38,6 +38,7 @@
 <body>
   <div class="container">
     <div id="chart-container"></div>
+    <p id="chart-note" style="display: none; margin: 12px 0 0; color: #666; font-size: 12px; text-align: center;"></p>
   </div>
 
   <footer style="text-align: center; margin-top: 40px; padding-bottom: 20px; width: 100%;">
@@ -54,7 +55,13 @@
     const responseData = await response.json();
     if (responseData.error) throw new Error(`Server error: ${responseData.error}`);
 
-    const { models: modelData } = responseData;
+    const { models: modelData = [], scores: scoresData = {} } = responseData;
+    const currentScores = scoresData.v1 || scoresData.v0 || {};
+    for (const model of modelData) {
+      if (model.score == null) {
+        model.score = currentScores[model.name] ?? null;
+      }
+    }
 
     const params = new URLSearchParams(window.location.search);
     const selected = params.get('models');
@@ -71,6 +78,7 @@
 
     const sortedData = [...filteredModels].sort((a, b) => b.score - a.score);
     const maxScore = Math.max(...sortedData.map(m => m.score));
+    const hasArchivedModels = sortedData.some(m => m.archived);
 
     const hexToRgb = hex => {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -130,8 +138,10 @@
       return width;
     };
 
+    const displayName = model => model.archived ? `${model.name} *` : model.name;
+
     const getWidestLabelWidth = (models) =>
-      Math.max(...models.map(m => measureSvgTextWidth(m.name, 12)));
+      Math.max(...models.map(m => measureSvgTextWidth(displayName(m), 12)));
 
     const niceMax = (value) => {
       const magnitude = Math.pow(10, Math.floor(Math.log10(value)));
@@ -153,6 +163,7 @@
     };
 
     const container = document.getElementById("chart-container");
+    const note = document.getElementById("chart-note");
     const widestLabel = getWidestLabelWidth(sortedData);
     const totalModels = sortedData.length;
     const ceilScore = niceMax(maxScore);
@@ -162,6 +173,10 @@
 
     function renderChart() {
       container.innerHTML = '';
+      note.style.display = hasArchivedModels ? 'block' : 'none';
+      note.textContent = hasArchivedModels
+        ? '* archived leaderboard entry preserved from the original standalone PressBench repo; not used in current eval runs.'
+        : '';
       const containerWidth = container.offsetWidth;
       const useHorizontalLayout = containerWidth < 640;
 
@@ -214,11 +229,12 @@
           const y = config.margin.top + barSpacing + i * (barHeight + barSpacing);
           const hBarWidth = (model.score / ceilScore) * chartAreaWidth;
           const color = getColor(i, totalModels);
+          const label = displayName(model);
           barsSvg += `
             <text x="${config.margin.left - labelBarGap}" y="${y + barHeight / 2 + 4}"
-                  font-family="${fontFamily}" font-size="12" text-anchor="end" fill="#333">${model.name}</text>
+                  font-family="${fontFamily}" font-size="12" text-anchor="end" fill="#333">${label}</text>
             <path d="${roundedRightRect(config.margin.left, y, hBarWidth, barHeight, 4)}" fill="${color}" opacity="0.8">
-              <title>${model.name}: ${model.score} lbs</title>
+              <title>${label}: ${model.score} lbs</title>
             </path>
             <text x="${config.margin.left + hBarWidth + 6}" y="${y + barHeight / 2 + 4}"
                   font-family="${fontFamily}" font-size="11" text-anchor="start" fill="#555">${model.score}</text>
@@ -251,14 +267,15 @@
           const labelX = barCenter + 12;
           const labelY = config.height - config.margin.bottom + 14;
           const color = getColor(i, totalModels);
+          const label = displayName(model);
 
           barsSvg += `
             <path d="${roundedTopRect(x, y, vBarWidth, vBarHeight, 4)}" fill="${color}" opacity="0.8">
-              <title>${model.name}: ${model.score} lbs</title>
+              <title>${label}: ${model.score} lbs</title>
             </path>
             <text x="${labelX}" y="${labelY}"
                   font-family="${fontFamily}" font-size="11" text-anchor="end" fill="#333"
-                  transform="rotate(-45, ${labelX}, ${labelY})">${model.name}</text>
+                  transform="rotate(-45, ${labelX}, ${labelY})">${label}</text>
           `;
         });
 

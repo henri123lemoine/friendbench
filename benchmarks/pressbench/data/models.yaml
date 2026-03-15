@@ -42,3 +42,26 @@
 - name: Llama 3.1 (405B)
   id: openrouter/meta-llama/llama-3.1-405b
   hidden: true
+
+# Historical snapshots preserved from the standalone PressBench repo.
+# These models are kept for the archived leaderboard only and are not runnable.
+- name: Sonnet 3.6
+  hidden: true
+  archived: true
+
+- name: Sonnet 3.7
+  hidden: true
+  archived: true
+
+- name: Sonnet 3.7 (thinking)
+  hidden: true
+  archived: true
+  thinking: true
+
+- name: Gemini 2.0 Flash Experimental
+  hidden: true
+  archived: true
+
+- name: Gemini 2.0 Flash-lite
+  hidden: true
+  archived: true
