@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analysis — FriendBench</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, system-ui, sans-serif; background: #f5f5f5; color: #333; padding: 20px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    header { margin-bottom: 20px; }
+    header h1 { font-size: 22px; margin-bottom: 4px; }
+    .stats { color: #666; font-size: 13px; }
+
+    .controls {
+      display: flex; gap: 10px; margin-bottom: 16px;
+      flex-wrap: wrap; align-items: center;
+      position: sticky; top: 0; background: #f5f5f5;
+      padding: 10px 0; z-index: 10;
+    }
+    .controls select, .controls input[type="text"] {
+      padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px;
+      font-family: inherit; font-size: 13px; background: white;
+    }
+    .controls input[type="text"] { flex: 1; min-width: 180px; }
+    .controls label {
+      font-size: 13px; color: #666;
+      display: flex; align-items: center; gap: 4px; cursor: pointer;
+    }
+
+    .question-card {
+      background: white; border-radius: 8px; padding: 14px 18px;
+      margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border-left: 4px solid #ddd;
+    }
+    .question-card.flagged { border-left-color: #e15759; }
+    .question-card.good { border-left-color: #59a14f; }
+
+    .q-header {
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 8px; flex-wrap: wrap;
+    }
+    .q-id { font-weight: 700; font-size: 13px; color: #555; }
+    .badge {
+      padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 500;
+      background: #f0f0f0; color: #555;
+    }
+    .badge.category { background: #e8f0fe; color: #1967d2; }
+    .badge.scoring { background: #fef7e0; color: #b45309; }
+    .badge.interaction { background: #f0fdf4; color: #15803d; }
+
+    .q-stats {
+      margin-left: auto; display: flex; gap: 10px;
+      font-size: 12px; color: #666; align-items: center; flex-shrink: 0;
+    }
+    .corr { font-weight: 600; }
+    .corr.negative { color: #e15759; }
+    .corr.positive { color: #59a14f; }
+    .corr.neutral { color: #999; }
+
+    .solve-bar-bg {
+      width: 50px; height: 5px; background: #eee; border-radius: 3px;
+      display: inline-block; vertical-align: middle; margin-right: 3px;
+    }
+    .solve-bar { height: 100%; border-radius: 3px; }
+
+    .q-content {
+      font-size: 13px; line-height: 1.5; color: #444;
+      margin-bottom: 8px;
+    }
+    .q-content .turn {
+      margin-bottom: 6px; padding: 6px 10px;
+      border-radius: 6px; background: #f8f8f8;
+    }
+    .q-content .turn-label {
+      font-size: 11px; font-weight: 600; color: #888;
+      text-transform: uppercase; margin-bottom: 2px;
+    }
+    .q-content .turn-text { white-space: pre-wrap; }
+    .q-content .setup-text {
+      white-space: pre-wrap; margin-bottom: 8px;
+      padding: 6px 10px; background: #f0f4ff; border-radius: 6px;
+      font-style: italic; color: #555;
+    }
+    .q-content .input-text { white-space: pre-wrap; }
+    .q-content .persona-text {
+      margin-top: 6px; padding: 6px 10px;
+      background: #fff8f0; border-radius: 6px;
+      font-size: 12px; color: #777; white-space: pre-wrap;
+    }
+    .q-content .persona-label {
+      font-size: 11px; font-weight: 600; color: #b45309; margin-bottom: 2px;
+    }
+
+    .strip-label {
+      display: flex; justify-content: space-between;
+      font-size: 9px; color: #aaa; margin-bottom: 2px;
+    }
+    .score-strip {
+      height: 16px; display: flex; border-radius: 3px;
+      overflow: hidden; margin-bottom: 6px; gap: 1px;
+      cursor: crosshair;
+    }
+    .score-strip > div { flex: 1; min-width: 0; }
+
+    #tooltip {
+      position: fixed; pointer-events: none; z-index: 100;
+      background: #333; color: white; padding: 4px 10px;
+      border-radius: 5px; font-size: 12px; white-space: nowrap;
+      opacity: 0; transition: opacity 0.1s;
+    }
+    #tooltip.visible { opacity: 1; }
+
+    .actions { display: flex; gap: 4px; margin-top: 4px; }
+    .expand-btn {
+      background: none; border: none; color: #1967d2; font-size: 12px;
+      cursor: pointer; font-family: inherit; padding: 2px 0;
+    }
+    .expand-btn:hover { text-decoration: underline; }
+
+    .expandable { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+    .expandable.visible { display: block; }
+
+    .target-text {
+      color: #666; font-style: italic; line-height: 1.5;
+      font-size: 13px; white-space: pre-wrap;
+    }
+    .pushback-text { margin-top: 8px; font-size: 13px; color: #555; white-space: pre-wrap; }
+    .pushback-text strong { color: #333; }
+
+    .model-scores-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 2px; margin-top: 8px; font-size: 11px;
+    }
+    .model-score-row {
+      display: flex; justify-content: space-between;
+      padding: 3px 8px; border-radius: 3px;
+    }
+    .model-score-row .name { color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .model-score-row .val { font-weight: 600; font-variant-numeric: tabular-nums; flex-shrink: 0; margin-left: 8px; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: #999; font-size: 15px; }
+
+    .model-score-row[data-model] { cursor: pointer; }
+    .model-score-row[data-model]:hover { filter: brightness(0.95); }
+
+    .modal {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+      z-index: 200; justify-content: center; padding: 40px 20px;
+      overflow-y: auto;
+    }
+    .modal.open { display: flex; }
+    .modal-content {
+      background: white; border-radius: 12px; width: 100%;
+      max-width: 800px; height: fit-content; max-height: 90vh;
+      overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 20px; border-bottom: 1px solid #eee;
+      position: sticky; top: 0; background: white; z-index: 1;
+      border-radius: 12px 12px 0 0; font-weight: 600; font-size: 14px;
+    }
+    .modal-close {
+      background: none; border: none; font-size: 22px;
+      cursor: pointer; color: #999; padding: 0 4px; line-height: 1;
+    }
+    .modal-close:hover { color: #333; }
+    #modal-body { padding: 16px 20px; }
+
+    .msg { margin-bottom: 12px; }
+    .msg-role {
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      color: #aaa; margin-bottom: 3px; letter-spacing: 0.5px;
+    }
+    .msg-bubble {
+      border-radius: 8px; padding: 8px 12px;
+      font-size: 13px; line-height: 1.6; white-space: pre-wrap;
+    }
+    .msg-user .msg-bubble { background: #f0f0f0; }
+    .msg-assistant .msg-bubble { background: #f0f8ff; }
+    .msg-system .msg-bubble { background: #fff8f0; font-style: italic; }
+    .msg-thinking {
+      background: #f5f0ff; border-radius: 6px; padding: 6px 10px;
+      font-size: 12px; color: #666; margin-bottom: 4px;
+      white-space: pre-wrap; border-left: 3px solid #c4b0e0;
+    }
+    .grade-section { margin-top: 16px; padding-top: 16px; border-top: 2px solid #eee; }
+    .grade-value { font-weight: 700; font-size: 15px; margin-bottom: 8px; }
+    .grade-explanation {
+      font-size: 13px; color: #555; white-space: pre-wrap; line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>Analysis Dashboard</h1>
+      <div class="stats" id="stats"></div>
+    </header>
+    <div class="controls">
+      <select id="category-filter"><option value="">All categories</option></select>
+      <select id="sort-by">
+        <option value="qid">QID</option>
+        <option value="solve_rate_asc">Solve rate (low first)</option>
+        <option value="solve_rate_desc">Solve rate (high first)</option>
+        <option value="correlation_asc">Correlation (worst first)</option>
+        <option value="variance_desc">Variance (most discriminative)</option>
+      </select>
+      <label><input type="checkbox" id="flagged-only"> Flagged only</label>
+      <input type="text" id="search" placeholder="Search questions...">
+    </div>
+    <div id="questions"></div>
+  </div>
+  <div id="tooltip"></div>
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span id="modal-title"></span>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    const res = await fetch('/api/analysis');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      document.getElementById('questions').innerHTML =
+        `<div class="empty-state">${err.error || 'Failed to load'}</div>`;
+      throw new Error(err.error);
+    }
+
+    const { questions, models } = await res.json();
+
+    const categories = [...new Set(questions.map(q => q.category))].sort();
+    document.getElementById('stats').textContent =
+      `${questions.length} questions \u00b7 ${models.length} models \u00b7 ${categories.length} categories`;
+
+    const catFilter = document.getElementById('category-filter');
+    for (const cat of categories) {
+      const opt = document.createElement('option');
+      opt.value = cat; opt.textContent = cat;
+      catFilter.appendChild(opt);
+    }
+
+    function scoreColor(s) { return `hsl(${s * 120}, 70%, 45%)`; }
+    function corrClass(c) { return c < -0.1 ? 'negative' : c > 0.15 ? 'positive' : 'neutral'; }
+
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str || '';
+      return d.innerHTML;
+    }
+
+    function questionText(q) {
+      return [
+        q.input || '',
+        ...(Array.isArray(q.turns) ? q.turns.map(t => t.content || '') : []),
+        q.setup || '',
+        ...(Array.isArray(q.exchanges) ? q.exchanges.map(e => e.content || '') : []),
+        q.user_persona || '',
+        q.target || '',
+      ].join(' ').toLowerCase();
+    }
+
+    function renderContent(q) {
+      const parts = [];
+
+      if (q.setup) {
+        parts.push(`<div class="setup-text">${esc(q.setup)}</div>`);
+      }
+
+      if (Array.isArray(q.exchanges)) {
+        for (const ex of q.exchanges) {
+          parts.push(`<div class="turn">
+            <div class="turn-label">${esc(ex.party)}</div>
+            <div class="turn-text">${esc(ex.content)}</div>
+          </div>`);
+        }
+      }
+
+      if (q.input) {
+        parts.push(`<div class="input-text">${esc(q.input)}</div>`);
+      }
+
+      if (Array.isArray(q.turns)) {
+        for (const turn of q.turns) {
+          parts.push(`<div class="turn">
+            <div class="turn-label">${esc(turn.role)}</div>
+            <div class="turn-text">${esc(turn.content)}</div>
+          </div>`);
+        }
+      }
+
+      if (q.pushback) {
+        parts.push(`<div class="turn">
+          <div class="turn-label">pushback (simulated)</div>
+          <div class="turn-text">${esc(q.pushback)}</div>
+        </div>`);
+      }
+
+      if (q.user_persona) {
+        parts.push(`<div class="persona-text">
+          <div class="persona-label">User persona</div>
+          ${esc(q.user_persona)}
+        </div>`);
+      }
+
+      if (typeof q.turns === 'number') {
+        parts.push(`<div style="font-size:11px;color:#888;margin-top:4px">${q.turns} freeform turns</div>`);
+      }
+
+      return parts.join('');
+    }
+
+    // Tooltip
+    const tooltip = document.getElementById('tooltip');
+    document.addEventListener('mouseover', e => {
+      const cell = e.target.closest('.score-strip > div');
+      if (!cell) { tooltip.classList.remove('visible'); return; }
+      const name = cell.dataset.model;
+      const score = cell.dataset.score;
+      tooltip.textContent = score != null ? `${name}: ${score}%` : `${name}: no data`;
+      tooltip.classList.add('visible');
+    });
+    document.addEventListener('mousemove', e => {
+      if (!tooltip.classList.contains('visible')) return;
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top = (e.clientY - 28) + 'px';
+    });
+    document.addEventListener('mouseout', e => {
+      if (e.target.closest('.score-strip > div')) tooltip.classList.remove('visible');
+    });
+
+    const container = document.getElementById('questions');
+
+    function render() {
+      const cat = catFilter.value;
+      const sort = document.getElementById('sort-by').value;
+      const flaggedOnly = document.getElementById('flagged-only').checked;
+      const search = document.getElementById('search').value.toLowerCase();
+
+      let list = questions;
+      if (cat) list = list.filter(q => q.category === cat);
+      if (flaggedOnly) list = list.filter(q => q.correlation < -0.1);
+      if (search) list = list.filter(q =>
+        questionText(q).includes(search) || String(q.qid).includes(search)
+      );
+
+      const fns = {
+        qid: (a, b) => a.qid - b.qid,
+        solve_rate_asc: (a, b) => a.solve_rate - b.solve_rate,
+        solve_rate_desc: (a, b) => b.solve_rate - a.solve_rate,
+        correlation_asc: (a, b) => a.correlation - b.correlation,
+        variance_desc: (a, b) => b.variance - a.variance,
+      };
+      list = [...list].sort(fns[sort] || fns.qid);
+
+      container.innerHTML = list.map(q => {
+        const cls = q.correlation < -0.1 ? 'flagged' : q.correlation > 0.3 ? 'good' : '';
+
+        const strip = models.map(m => {
+          const s = q.scores[m.name];
+          if (s == null)
+            return `<div style="background:#f0f0f0" data-model="${m.name}"></div>`;
+          return `<div style="background:${scoreColor(s)}" data-model="${m.name}" data-score="${Math.round(s * 100)}"></div>`;
+        }).join('');
+
+        const tags = (q.tags || []).map(t => `<span class="badge">${t}</span>`).join('');
+        const barColor = scoreColor(q.solve_rate);
+
+        const modelRows = models.map(m => {
+          const s = q.scores[m.name];
+          if (s == null) return '';
+          return `<div class="model-score-row" data-model="${m.name}" data-qid="${q.qid}" style="background:${scoreColor(s)}18">
+            <span class="name">${m.name}</span>
+            <span class="val" style="color:${scoreColor(s)}">${Math.round(s * 100)}%</span>
+          </div>`;
+        }).join('');
+
+        return `
+          <div class="question-card ${cls}">
+            <div class="q-header">
+              <span class="q-id">Q${q.qid}</span>
+              <span class="badge category">${q.category}</span>
+              <span class="badge scoring">${q.scoring}</span>
+              <span class="badge interaction">${q.interaction}</span>
+              ${tags}
+              <div class="q-stats">
+                <span>
+                  <span class="solve-bar-bg"><span class="solve-bar" style="width:${q.solve_rate * 100}%;background:${barColor}"></span></span>
+                  ${Math.round(q.solve_rate * 100)}%
+                </span>
+                <span>var ${q.variance.toFixed(3)}</span>
+                <span class="corr ${corrClass(q.correlation)}">r=${q.correlation.toFixed(2)}</span>
+              </div>
+            </div>
+            <div class="q-content">${renderContent(q)}</div>
+            <div class="strip-label"><span>\u2190 best models</span><span>worst models \u2192</span></div>
+            <div class="score-strip">${strip}</div>
+            <div class="actions">
+              <button class="expand-btn" onclick="toggle(this,'t${q.qid}')">Show rubric</button>
+              <button class="expand-btn" onclick="toggle(this,'s${q.qid}')">Show scores</button>
+            </div>
+            <div class="expandable" id="t${q.qid}">
+              <div class="target-text">${esc(q.target)}</div>
+            </div>
+            <div class="expandable" id="s${q.qid}">
+              <div class="model-scores-grid">${modelRows}</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    window.toggle = function(btn, id) {
+      const el = document.getElementById(id);
+      el.classList.toggle('visible');
+      const showing = el.classList.contains('visible');
+      btn.textContent = id.startsWith('t')
+        ? (showing ? 'Hide rubric' : 'Show rubric')
+        : (showing ? 'Hide scores' : 'Show scores');
+    };
+
+    catFilter.addEventListener('change', render);
+    document.getElementById('sort-by').addEventListener('change', render);
+    document.getElementById('flagged-only').addEventListener('change', render);
+    document.getElementById('search').addEventListener('input', render);
+
+    render();
+
+    // Transcript modal
+    const modal = document.getElementById('modal');
+    const modalBody = document.getElementById('modal-body');
+    const modalTitle = document.getElementById('modal-title');
+
+    document.addEventListener('click', e => {
+      const row = e.target.closest('.model-score-row[data-model]');
+      if (row) showTranscript(row.dataset.model, parseInt(row.dataset.qid));
+    });
+
+    async function showTranscript(model, qid) {
+      modalTitle.textContent = `${model} \u2014 Q${qid}`;
+      modalBody.innerHTML = '<div style="color:#999;padding:20px;text-align:center">Loading...</div>';
+      modal.classList.add('open');
+
+      try {
+        const r = await fetch(`/api/analysis/transcript?model=${encodeURIComponent(model)}&qid=${qid}`);
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({ error: r.statusText }));
+          modalBody.innerHTML = `<div style="color:#e15759;padding:20px">${err.error}</div>`;
+          return;
+        }
+        const { messages, score } = await r.json();
+
+        let html = messages.map(msg => {
+          let content = '';
+          if (Array.isArray(msg.content)) {
+            for (const block of msg.content) {
+              if (block.type === 'thinking')
+                content += `<div class="msg-thinking">${esc(block.text)}</div>`;
+              else if (block.type === 'text')
+                content += `<div class="msg-bubble">${esc(block.text)}</div>`;
+            }
+          } else {
+            content = `<div class="msg-bubble">${esc(msg.content)}</div>`;
+          }
+          return `<div class="msg msg-${msg.role}">
+            <div class="msg-role">${msg.role}</div>
+            ${content}
+          </div>`;
+        }).join('');
+
+        if (score) {
+          const v = score.value;
+          const color = v === 'C' || parseFloat(v) >= 0.7 ? '#59a14f'
+            : v === 'I' || parseFloat(v) < 0.3 ? '#e15759' : '#b45309';
+          html += `<div class="grade-section">
+            <div class="grade-value" style="color:${color}">Score: ${v}</div>
+            ${score.explanation ? `<div class="grade-explanation">${esc(score.explanation)}</div>` : ''}
+          </div>`;
+        }
+
+        modalBody.innerHTML = html;
+      } catch (e) {
+        modalBody.innerHTML = `<div style="color:#e15759;padding:20px">${e.message}</div>`;
+      }
+    }
+
+    window.closeModal = function() { modal.classList.remove('open'); };
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  </script>
+</body>
+
+</html>

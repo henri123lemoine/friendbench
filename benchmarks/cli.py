@@ -513,6 +513,18 @@ def analyze_run(benchmark, log_dir, output_dir, no_plot):
     name_lookup = _model_name_lookup(models_yaml)
     matrix, question_meta = build_matrix(logs, name_lookup)
 
+    import json as json_mod
+
+    log_index = {}
+    for log in logs:
+        key = (log.eval.model, log.eval.model_generate_config.model_dump_json(exclude_none=True))
+        name = name_lookup.get(key)
+        if name:
+            log_index[name] = log.location
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "log_index.json").write_text(json_mod.dumps(log_index))
+
     mod = importlib.import_module(f"benchmarks.{benchmark}.analyze")
     mod.run_analysis(
         matrix,

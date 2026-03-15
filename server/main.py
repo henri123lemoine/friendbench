@@ -62,6 +62,146 @@ def list_benchmarks():
     return {"benchmarks": discover_benchmarks()}
 
 
+@app.get("/api/analysis")
+def get_analysis(request: Request):
+    import csv
+
+    bench = resolve_benchmark(request)
+    data_dir = BENCHMARKS_DIR / bench / "data"
+    analysis_dir = BENCHMARKS_DIR / bench / "analysis"
+
+    matrix_path = analysis_dir / "matrix.csv"
+    if not matrix_path.exists():
+        return JSONResponse(
+            {"error": f"No matrix.csv. Run 'uv run bench analyze run -b {bench}' first."},
+            status_code=404,
+        )
+
+    questions_path = data_dir / "questions.yaml"
+    questions = yaml.safe_load(questions_path.read_text()) if questions_path.exists() else []
+
+    with open(matrix_path) as f:
+        reader = csv.DictReader(f)
+        model_names = [c for c in (reader.fieldnames or []) if c not in ("qid", "category", "scoring")]
+        rows = list(reader)
+
+    model_totals: dict[str, list[float]] = {m: [] for m in model_names}
+    for row in rows:
+        for m in model_names:
+            if row[m]:
+                model_totals[m].append(float(row[m]))
+    model_overall = {m: sum(v) / len(v) if v else 0 for m, v in model_totals.items()}
+
+    result = []
+    for row in rows:
+        qid = int(row["qid"])
+        scores: dict[str, float] = {}
+        q_vals: list[float] = []
+        m_vals: list[float] = []
+        for m in model_names:
+            if row[m]:
+                v = float(row[m])
+                scores[m] = v
+                q_vals.append(v)
+                m_vals.append(model_overall[m])
+
+        solve_rate = sum(q_vals) / len(q_vals) if q_vals else 0
+        var = (
+            sum((v - solve_rate) ** 2 for v in q_vals) / len(q_vals)
+            if len(q_vals) > 1
+            else 0
+        )
+
+        corr = 0.0
+        if len(q_vals) >= 3:
+            mx, my = solve_rate, sum(m_vals) / len(m_vals)
+            num = sum((a - mx) * (b - my) for a, b in zip(q_vals, m_vals))
+            d = (sum((a - mx) ** 2 for a in q_vals) * sum((b - my) ** 2 for b in m_vals)) ** 0.5
+            corr = num / d if d > 0 else 0
+
+        q_meta = questions[qid - 1] if qid <= len(questions) else {}
+        entry = dict(q_meta)
+        entry.update({
+            "qid": qid,
+            "category": row.get("category", ""),
+            "scoring": row.get("scoring", ""),
+            "solve_rate": round(solve_rate, 3),
+            "variance": round(var, 4),
+            "correlation": round(corr, 3),
+            "scores": scores,
+        })
+        result.append(entry)
+
+    sorted_models = sorted(model_overall.items(), key=lambda x: x[1], reverse=True)
+    return {
+        "questions": result,
+        "models": [{"name": n, "overall": round(s, 3)} for n, s in sorted_models],
+    }
+
+
+@app.get("/api/analysis/transcript")
+def get_transcript(request: Request, model: str, qid: int):
+    import json as json_mod
+
+    bench = resolve_benchmark(request)
+    index_path = BENCHMARKS_DIR / bench / "analysis" / "log_index.json"
+    if not index_path.exists():
+        return JSONResponse(
+            {"error": "No log_index.json. Re-run 'uv run bench analyze run'."},
+            status_code=404,
+        )
+
+    log_index = json_mod.loads(index_path.read_text())
+    log_file = log_index.get(model)
+    if not log_file:
+        return JSONResponse({"error": f"No log for '{model}'"}, status_code=404)
+
+    from inspect_ai.log import read_eval_log_sample
+
+    try:
+        sample = read_eval_log_sample(
+            log_file, id=qid, epoch=1, exclude_fields={"events", "store", "attachments"}
+        )
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=404)
+
+    def serialize_content(content):
+        if isinstance(content, str):
+            return [{"type": "text", "text": content}]
+        parts = []
+        for block in content:
+            if hasattr(block, "text"):
+                parts.append({"type": "text", "text": block.text})
+            elif hasattr(block, "reasoning"):
+                text = block.summary if getattr(block, "redacted", False) else block.reasoning
+                if text:
+                    parts.append({"type": "thinking", "text": text})
+        return parts
+
+    messages = [
+        {"role": msg.role, "content": serialize_content(msg.content)}
+        for msg in sample.messages
+    ]
+
+    score_info = None
+    if sample.scores:
+        score = next(iter(sample.scores.values()))
+        score_info = {
+            "value": str(score.value),
+            "explanation": score.explanation,
+        }
+
+    return {"messages": messages, "score": score_info}
+
+
+@app.get("/analysis")
+def serve_analysis():
+    path = Path(__file__).parent / "analysis.html"
+    if path.exists():
+        return FileResponse(path)
+    return JSONResponse({"error": "analysis.html not found"}, status_code=404)
+
+
 @app.get("/assets/{path:path}")
 def serve_asset(path: str, request: Request):
     bench = resolve_benchmark(request)
