@@ -45,7 +45,9 @@ def build_matrix(
     for log in logs:
         config_json = log.eval.model_generate_config.model_dump_json(exclude_none=True)
         key = (log.eval.model, config_json)
-        model_name = name_lookup.get(key, log.eval.model)
+        if key not in name_lookup:
+            continue
+        model_name = name_lookup[key]
 
         scores: dict[int, float] = {}
         for sample in log.samples or []:

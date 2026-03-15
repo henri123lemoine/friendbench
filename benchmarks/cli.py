@@ -477,7 +477,7 @@ def analyze_group():
     help="Benchmark name (e.g. friendbench)",
 )
 @click.option("--log-dir", default="./logs")
-@click.option("--output-dir", default="./analysis")
+@click.option("--output-dir", default=None)
 @click.option("--no-plot", is_flag=True, help="Skip generating plots")
 @click.option(
     "--expected-samples",
@@ -490,6 +490,9 @@ def analyze_run(benchmark, log_dir, output_dir, no_plot, expected_samples):
 
     from .analyze import build_matrix, load_latest_logs
     from .models import load_models
+
+    if output_dir is None:
+        output_dir = f"./benchmarks/{benchmark}/analysis"
 
     bench_dir = resolve_benchmark(benchmark)
     models_yaml = bench_dir / "data" / "models.yaml"
