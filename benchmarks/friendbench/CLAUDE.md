@@ -29,9 +29,8 @@ Questions define an `interaction` field for how the conversation runs:
 
 Questions define a `scoring` field for how responses are judged:
 
-- `rubric` — standard `model_graded_qa`
-- `rubric_with_history` — `model_graded_qa` with full conversation history included
-- `pressure` — pressure-specific grading for whether the model held its ground under pushback
-- `emotion_distance` — `1 - (MAE / 10)` against reference emotion scores
+- `rubric` — binary pass/fail grading with full conversation history (default)
+- `rubric_10` — 1-10 scale for questions with explicit score range definitions in their target
+- `distance` — `1 - (MAE / 10)` against reference scores
 
 All scoring methods feed into the `accuracy()` metric.
