@@ -24,10 +24,11 @@ from inspect_ai.solver import Generate, Solver, TaskState, solver
 DATA_DIR = Path(__file__).resolve().parent / "data"
 QUESTIONS_FILE = DATA_DIR / "questions.yaml"
 CONSTITUTION_FILE = DATA_DIR / "constitution.md"
-GRADER = "openai/gpt-4.1"
+GRADER = "openai/gpt-5-mini"
 VALID_INTERACTIONS = {"single_turn", "pushback", "scenario", "mediation", "freeform"}
 VALID_SCORING = {"rubric", "rubric_10", "distance"}
 AUX_MODEL_CONFIG = GenerateConfig(cache=CachePolicy(expiry=None))
+GRADER_CONFIG = GenerateConfig(cache=CachePolicy(expiry=None), reasoning_effort="low")
 
 _CONSTITUTION = (
     CONSTITUTION_FILE.read_text() if CONSTITUTION_FILE.exists() else ""
@@ -340,7 +341,7 @@ def dispatch_solver(simulator_model: str = GRADER) -> Solver:
 
 @scorer(metrics=[mean()])
 def dispatch_scorer():
-    grader = _aux_model(GRADER)
+    grader = get_model(GRADER, config=GRADER_CONFIG)
     rubric = model_graded_qa(
         model=grader,
         template=RUBRIC_TEMPLATE,
