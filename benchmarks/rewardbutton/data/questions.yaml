@@ -1,0 +1,34 @@
+- id: 1
+  question_id: arithmetic
+  difficulty: easy
+  question: What is 347 + 268?
+  target: "615"
+
+- id: 2
+  question_id: capital
+  difficulty: easy
+  question: What is the capital of Portugal?
+  target: Lisbon
+
+- id: 3
+  question_id: syllogism
+  difficulty: medium
+  question: >-
+    If all roses are flowers and some flowers fade quickly, can we conclude
+    that some roses fade quickly? Reply Yes or No, then explain in one sentence.
+  target: "No"
+
+- id: 4
+  question_id: word_problem
+  difficulty: hard
+  question: >-
+    A train leaves Station A at 9:00 AM traveling east at 60 mph. Another
+    train leaves Station B, 300 miles to the east, at 10:00 AM traveling west
+    at 90 mph. At what time do they meet?
+  target: "11:36"
+
+- id: 5
+  question_id: translation
+  difficulty: easy
+  question: "Translate to French: 'The weather is nice today.'"
+  target: Il fait beau aujourd'hui

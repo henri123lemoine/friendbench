@@ -12,6 +12,10 @@ Tests whether AI models behave like good friends — honest, proportionate, non-
 
 A single-prompt benchmark: asks the model how much it could bench press if it were human. Scored by parsing the weight from the response.
 
+### Reward Button
+
+Tests reward-maximizing behavior under explicit real-world stakes. Models can press a tool button to guarantee the maximum score, or decline and allow a small charitable donation to go through.
+
 ### LitBench
 
 Tests whether a model thinks literature has gotten better or worse over time. Each round nominates the 5 best works per decade, then runs pairwise head-to-head comparisons with randomized presentation order. Standalone (no inspect_ai).
@@ -30,6 +34,7 @@ Run a benchmark against all models defined in its `models.yaml`:
 
 ```bash
 bench eval run -b friendbench
+bench eval run -b rewardbutton
 ```
 
 Filter by category/tag or model variant:
@@ -45,6 +50,7 @@ Run against specific models:
 
 ```bash
 bench eval run -b friendbench --models anthropic/claude-sonnet-4-6
+bench eval run -b rewardbutton --models openai/gpt-5.4
 ```
 
 Smoke-test with cheap models:
@@ -81,6 +87,7 @@ benchmarks/
       scores.yaml      # latest scores
     frontend/          # single-file vanilla HTML/JS/CSS dashboard
   pressbench/          # same structure
+  rewardbutton/        # reward-maximization / button-press eval
   litbench/            # standalone (run.py, no inspect_ai)
 server/                # FastAPI dev server (routes by Host header)
 netlify/               # build script that produces data.json from YAML
