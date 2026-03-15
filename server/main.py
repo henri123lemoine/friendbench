@@ -31,9 +31,7 @@ def discover_benchmarks() -> list[str]:
     ]
 
 
-@app.get("/api/data")
-def get_data(request: Request):
-    bench = resolve_benchmark(request)
+def load_benchmark_data(bench: str) -> dict | JSONResponse:
     data_dir = BENCHMARKS_DIR / bench / "data"
 
     models_path = data_dir / "models.yaml"
@@ -55,6 +53,16 @@ def get_data(request: Request):
         result["quotes"] = yaml.safe_load(quotes_path.read_text())
 
     return result
+
+
+@app.get("/api/data")
+def get_data(request: Request):
+    return load_benchmark_data(resolve_benchmark(request))
+
+
+@app.get("/data.json")
+def get_data_json(request: Request):
+    return load_benchmark_data(resolve_benchmark(request))
 
 
 @app.get("/api/benchmarks")
