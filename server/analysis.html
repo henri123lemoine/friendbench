@@ -185,9 +185,17 @@
     .msg-assistant .msg-bubble { background: #f0f8ff; }
     .msg-system .msg-bubble { background: #fff8f0; font-style: italic; }
     .msg-thinking {
-      background: #f5f0ff; border-radius: 6px; padding: 6px 10px;
+      background: #f5f0ff; border-radius: 6px;
       font-size: 12px; color: #666; margin-bottom: 4px;
-      white-space: pre-wrap; border-left: 3px solid #c4b0e0;
+      border-left: 3px solid #c4b0e0; overflow: hidden;
+    }
+    .msg-thinking summary {
+      padding: 6px 10px; cursor: pointer; user-select: none;
+      font-size: 11px; color: #999;
+    }
+    .msg-thinking summary:hover { color: #666; }
+    .msg-thinking .thinking-body {
+      padding: 0 10px 6px; white-space: pre-wrap; line-height: 1.5;
     }
     .grade-section { margin-top: 16px; padding-top: 16px; border-top: 2px solid #eee; }
     .grade-value { font-weight: 700; font-size: 15px; margin-bottom: 8px; }
@@ -464,7 +472,7 @@
           if (Array.isArray(msg.content)) {
             for (const block of msg.content) {
               if (block.type === 'thinking')
-                content += `<div class="msg-thinking">${esc(block.text)}</div>`;
+                content += `<details class="msg-thinking"><summary>Thinking</summary><div class="thinking-body">${esc(block.text)}</div></details>`;
               else if (block.type === 'text')
                 content += `<div class="msg-bubble">${esc(block.text)}</div>`;
             }

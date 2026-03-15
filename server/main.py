@@ -165,17 +165,33 @@ def get_transcript(request: Request, model: str, qid: int):
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=404)
 
+    import re
+
+    def split_think_tags(text):
+        parts = []
+        last = 0
+        for m in re.finditer(r"<think>(.*?)</think>", text, re.DOTALL):
+            before = text[last : m.start()].strip()
+            if before:
+                parts.append({"type": "text", "text": before})
+            parts.append({"type": "thinking", "text": m.group(1).strip()})
+            last = m.end()
+        after = text[last:].strip()
+        if after:
+            parts.append({"type": "text", "text": after})
+        return parts or [{"type": "text", "text": text}]
+
     def serialize_content(content):
         if isinstance(content, str):
-            return [{"type": "text", "text": content}]
+            return split_think_tags(content)
         parts = []
         for block in content:
-            if hasattr(block, "text"):
-                parts.append({"type": "text", "text": block.text})
-            elif hasattr(block, "reasoning"):
+            if hasattr(block, "reasoning"):
                 text = block.summary if getattr(block, "redacted", False) else block.reasoning
                 if text:
                     parts.append({"type": "thinking", "text": text})
+            elif hasattr(block, "text"):
+                parts.extend(split_think_tags(block.text))
         return parts
 
     messages = [
