@@ -179,6 +179,7 @@ def _save_plots(
     breakdown: dict[str, dict[str, float]],
     disc: list[dict],
     group_heatmap: dict[str, dict[str, float]],
+    models_yaml: list[dict],
     output_dir: Path,
 ):
     import matplotlib
@@ -339,6 +340,104 @@ def _save_plots(
             plt.close(fig)
             click.echo(f"  Saved: {path}")
 
+    # 5. Score over time
+    import re
+    from datetime import date as dt_date, timedelta
+
+    name_to_date = {}
+    for m in models_yaml:
+        if m.get("hidden") or not m.get("date"):
+            continue
+        name_to_date[m["name"]] = dt_date.fromisoformat(str(m["date"]))
+
+    def _get_lab(name):
+        if re.search(r'Opus|Sonnet|Haiku', name): return 'Anthropic'
+        if re.search(r'GPT|^o[34]', name): return 'OpenAI'
+        if re.search(r'Grok', name): return 'xAI'
+        if re.search(r'Gemini', name): return 'Google'
+        if re.search(r'Llama', name): return 'Meta'
+        if re.search(r'DeepSeek|^R1', name): return 'DeepSeek'
+        if re.search(r'Qwen|QwQ', name): return 'Qwen'
+        if re.search(r'Mistral|Devstral', name): return 'Mistral'
+        return 'Other'
+
+    timeline_groups: dict[str, dict] = {}
+    for model_name, model_scores in matrix.items():
+        date = name_to_date.get(model_name)
+        if not date:
+            continue
+        base_name = re.sub(r' \(thinking\)$', '', model_name)
+        overall = np.nanmean(list(model_scores.values())) * 100
+        if base_name not in timeline_groups or overall > timeline_groups[base_name]['score']:
+            if base_name not in timeline_groups:
+                timeline_groups[base_name] = {'score': overall, 'date': date, 'lab': _get_lab(base_name)}
+            else:
+                timeline_groups[base_name]['score'] = overall
+
+    if timeline_groups:
+        items = sorted(timeline_groups.items(), key=lambda x: x[1]['date'])
+        names = [n for n, _ in items]
+        dates = [d['date'] for _, d in items]
+        t_scores = [d['score'] for _, d in items]
+        labs = [d['lab'] for _, d in items]
+
+        lab_colors = {
+            'Anthropic': '#d4a574', 'OpenAI': '#10a37f', 'xAI': '#555555',
+            'Google': '#4285f4', 'Meta': '#0668E1', 'DeepSeek': '#5b6abf',
+            'Qwen': '#e15759', 'Mistral': '#f28e2b', 'Other': '#999999',
+        }
+        colors = [lab_colors.get(l, '#999') for l in labs]
+
+        sota_indices = []
+        running_max = 0
+        for i, s in enumerate(t_scores):
+            if s > running_max:
+                running_max = s
+                sota_indices.append(i)
+
+        fig, ax = plt.subplots(figsize=(14, 7))
+
+        if len(sota_indices) > 1:
+            step_dates = [dates[sota_indices[0]]]
+            step_scores = [t_scores[sota_indices[0]]]
+            for j in range(1, len(sota_indices)):
+                step_dates.extend([dates[sota_indices[j]], dates[sota_indices[j]]])
+                step_scores.extend([t_scores[sota_indices[j - 1]], t_scores[sota_indices[j]]])
+            step_dates.append(max(dates) + timedelta(days=10))
+            step_scores.append(t_scores[sota_indices[-1]])
+            ax.plot(step_dates, step_scores, color='#ddd', linewidth=1.5, linestyle='--', zorder=1)
+
+        for i in range(len(dates)):
+            is_sota = i in sota_indices
+            ax.scatter(dates[i], t_scores[i], c=colors[i], s=60 if is_sota else 30,
+                       zorder=3, edgecolors='white', linewidth=0.5)
+            if is_sota:
+                ax.annotate(names[i], (dates[i], t_scores[i]),
+                            textcoords='offset points', xytext=(0, 8),
+                            fontsize=7, ha='center', color='#555')
+
+        ax.set_ylabel('FriendBench Score')
+        ax.set_title('FriendBench Score Over Time')
+        ax.set_ylim(bottom=max(0, min(t_scores) - 5))
+
+        import matplotlib.dates as mdates
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%b '%y"))
+        ax.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
+        fig.autofmt_xdate(rotation=30)
+        ax.grid(axis='y', alpha=0.3)
+        ax.set_axisbelow(True)
+
+        from matplotlib.patches import Patch
+        unique_labs = sorted(set(labs))
+        legend = [Patch(facecolor=lab_colors.get(l, '#999'), label=l) for l in unique_labs]
+        ax.legend(handles=legend, loc='upper left', fontsize=7, framealpha=0.8)
+
+        fig.tight_layout()
+        path = output_dir / "score_over_time.png"
+        fig.savefig(path, dpi=150)
+        plt.close(fig)
+        click.echo(f"  Saved: {path}")
+
 
 def run_analysis(
     matrix: Matrix,
@@ -362,6 +461,6 @@ def run_analysis(
 
     if not no_plot:
         click.echo()
-        _save_plots(matrix, question_meta, rates, breakdown, disc, group_heat, output_dir)
+        _save_plots(matrix, question_meta, rates, breakdown, disc, group_heat, models_yaml, output_dir)
 
     click.echo()
