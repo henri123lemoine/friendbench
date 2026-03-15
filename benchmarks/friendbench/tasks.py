@@ -372,7 +372,7 @@ def dispatch_scorer():
 
 @task
 def friendbench(categories: str = "", test: bool = False, **kwargs):
-    from ..analyze import questions_hash
+    from benchmarks.analyze import questions_hash
 
     entries = [_validate_entry(e) for e in _load_entries()]
     cat_list = [c.strip() for c in categories.split(",") if c.strip()] or None

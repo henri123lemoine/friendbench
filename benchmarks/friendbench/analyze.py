@@ -4,7 +4,7 @@ from statistics import mean, variance
 
 import click
 
-from ..analyze import Matrix
+from benchmarks.analyze import Matrix
 
 
 def question_solve_rates(
