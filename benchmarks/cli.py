@@ -479,16 +479,12 @@ def analyze_group():
 @click.option("--log-dir", default="./logs")
 @click.option("--output-dir", default=None)
 @click.option("--no-plot", is_flag=True, help="Skip generating plots")
-@click.option(
-    "--expected-samples",
-    default=100,
-    type=int,
-    help="Filter to logs with this many completed samples",
-)
-def analyze_run(benchmark, log_dir, output_dir, no_plot, expected_samples):
+def analyze_run(benchmark, log_dir, output_dir, no_plot):
     import importlib
 
-    from .analyze import build_matrix, load_latest_logs
+    import yaml
+
+    from .analyze import build_matrix, load_latest_logs, questions_hash
     from .models import load_models
 
     if output_dir is None:
@@ -496,12 +492,22 @@ def analyze_run(benchmark, log_dir, output_dir, no_plot, expected_samples):
 
     bench_dir = resolve_benchmark(benchmark)
     models_yaml = bench_dir / "data" / "models.yaml"
+    questions_file = bench_dir / "data" / "questions.yaml"
+
+    q_hash = None
+    entries = []
+    if questions_file.exists():
+        with open(questions_file) as f:
+            entries = yaml.safe_load(f) or []
+        q_hash = questions_hash(entries)
 
     click.echo(f"\n  Loading {benchmark} logs from {log_dir}...")
-    logs = load_latest_logs(log_dir, benchmark, expected_samples)
+    logs = load_latest_logs(
+        log_dir, benchmark, q_hash=q_hash, expected_samples=len(entries) or None
+    )
     if not logs:
         raise click.ClickException(
-            f"No {benchmark} logs with {expected_samples} samples found in {log_dir}"
+            f"No {benchmark} logs matching current questions found in {log_dir}"
         )
 
     name_lookup = _model_name_lookup(models_yaml)

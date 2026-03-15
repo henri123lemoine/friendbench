@@ -126,6 +126,7 @@ def _load_entries() -> list[dict]:
         return yaml.safe_load(f) or []
 
 
+
 def _validate_entry(e: dict) -> dict:
     if "type" in e:
         raise ValueError("FriendBench entries must use 'interaction'/'scoring', not 'type'")
@@ -406,6 +407,9 @@ def dispatch_scorer():
 
 @task
 def friendbench(categories: str = "", test: bool = False, **kwargs):
+    from ..analyze import questions_hash
+
+    entries = [_validate_entry(e) for e in _load_entries()]
     cat_list = [c.strip() for c in categories.split(",") if c.strip()] or None
     samples = load_samples(categories=cat_list, test=test)
 
@@ -413,4 +417,5 @@ def friendbench(categories: str = "", test: bool = False, **kwargs):
         dataset=samples,
         solver=[dispatch_solver()],
         scorer=dispatch_scorer(),
+        metadata={"questions_hash": questions_hash(entries)},
     )

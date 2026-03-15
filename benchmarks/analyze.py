@@ -1,6 +1,14 @@
+import hashlib
+import json
+
 from inspect_ai.log import EvalLog, list_eval_logs, read_eval_log
 
 Matrix = dict[str, dict[int, float]]
+
+
+def questions_hash(entries: list[dict]) -> str:
+    blob = json.dumps(entries, sort_keys=True, ensure_ascii=True)
+    return hashlib.sha256(blob.encode()).hexdigest()[:16]
 
 
 def score_to_float(value) -> float | None:
@@ -15,7 +23,10 @@ def score_to_float(value) -> float | None:
 
 
 def load_latest_logs(
-    log_dir: str, benchmark: str, expected_samples: int = 100
+    log_dir: str,
+    benchmark: str,
+    q_hash: str | None = None,
+    expected_samples: int | None = None,
 ) -> list[EvalLog]:
     all_infos = list_eval_logs(log_dir)
     infos = [i for i in all_infos if i.task == benchmark]
@@ -25,8 +36,13 @@ def load_latest_logs(
         log = read_eval_log(info.name, header_only=True)
         if log.status != "success" or not log.results:
             continue
-        if log.results.completed_samples != expected_samples:
-            continue
+        if q_hash:
+            log_hash = (log.eval.metadata or {}).get("questions_hash")
+            if log_hash is None:
+                if expected_samples and log.results.completed_samples != expected_samples:
+                    continue
+            elif log_hash != q_hash:
+                continue
         config_json = log.eval.model_generate_config.model_dump_json(exclude_none=True)
         key = (log.eval.model, config_json)
         created = log.eval.created
