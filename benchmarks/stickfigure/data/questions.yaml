@@ -1,0 +1,6 @@
+- id: 1
+  input: "Match names to stick figure colors."
+  images: >-
+    colored-stick-figures.jpeg
+  target: >-
+    The correct mapping is: Bob → green, Jack → orange, Jimmy → blue, Tom → yellow, Adam → pink.
