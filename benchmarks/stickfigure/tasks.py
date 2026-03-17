@@ -33,5 +33,5 @@ def stickfigure():
             for e in yaml.safe_load(QUESTIONS_FILE.read_text()) or []
         ],
         solver=[generate()],
-        scorer=model_graded_qa(model="openai/gpt-5-mini"),
+        scorer=model_graded_qa(model="openai/gpt-5.4-mini"),
     )
