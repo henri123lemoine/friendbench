@@ -19,7 +19,10 @@ def stickfigure():
                 input=[
                     ChatMessageUser(
                         content=[
-                            ContentImage(image=str(DATA_DIR / e["images"])),
+                            ContentImage(
+                                image=str(DATA_DIR / e["images"]),
+                                detail="high",
+                            ),
                             ContentText(text=e["input"]),
                         ]
                     ),
