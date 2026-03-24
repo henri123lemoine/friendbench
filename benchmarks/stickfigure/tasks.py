@@ -11,10 +11,11 @@ from inspect_ai.log._samples import sample_active
 from inspect_ai.model import ChatMessageUser, ContentImage, ContentText
 from inspect_ai.scorer import model_graded_qa
 from inspect_ai.solver import generate, use_tools
-from inspect_ai.tool import Tool, ToolError, tool
+from inspect_ai.tool import Tool, ToolError, code_execution, tool
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 QUESTIONS_FILE = DATA_DIR / "questions.yaml"
+CROP_TARGET_MAX_DIMENSION = 2048
 
 
 def _image_data_url(image: Image.Image) -> str:
@@ -34,17 +35,67 @@ def _normalize_images(images: str | list[str] | dict[str, str]) -> dict[str, str
     return images
 
 
-def _active_images() -> dict[str, Path]:
+def _sandbox_paths(images: dict[str, str]) -> dict[str, str]:
+    sandbox_paths: dict[str, str] = {}
+    used_paths: set[str] = set()
+
+    for image_id, rel_path in images.items():
+        filename = Path(rel_path).name
+        sandbox_path = f"images/{filename}"
+        if sandbox_path in used_paths:
+            sandbox_path = f"images/{image_id}-{filename}"
+        used_paths.add(sandbox_path)
+        sandbox_paths[image_id] = sandbox_path
+
+    return sandbox_paths
+
+
+def _sample_from_entry(entry: dict[str, str]) -> Sample:
+    image_map = _normalize_images(entry["images"])
+    sandbox_map = _sandbox_paths(image_map)
+    primary_image = next(iter(image_map.values()))
+
+    return Sample(
+        input=[
+            ChatMessageUser(
+                content=[
+                    ContentImage(
+                        image=str(DATA_DIR / primary_image),
+                        detail="high",
+                    ),
+                    ContentText(text=entry["input"]),
+                ]
+            ),
+        ],
+        target=entry["target"],
+        id=entry["id"],
+        metadata={
+            "images": image_map,
+            "sandbox_images": sandbox_map,
+        },
+        files={
+            sandbox_path: str(DATA_DIR / image_map[image_id])
+            for image_id, sandbox_path in sandbox_map.items()
+        },
+    )
+
+
+def _active_metadata_field(key: str) -> dict[str, str]:
     active = sample_active()
     if active is None:
         raise ToolError("No active sample is available.")
+    value = cast(dict[str, str] | None, (active.sample.metadata or {}).get(key))
+    if not value:
+        raise ToolError(f"No {key.replace('_', ' ')} available for the image tools.")
+    return value
 
-    metadata = active.sample.metadata or {}
-    image_map = cast(dict[str, str] | None, metadata.get("images"))
-    if not image_map:
-        raise ToolError("This sample does not expose any images to the image tools.")
 
-    return {image_id: DATA_DIR / rel_path for image_id, rel_path in image_map.items()}
+def _active_images() -> dict[str, Path]:
+    return {k: DATA_DIR / v for k, v in _active_metadata_field("images").items()}
+
+
+def _active_sandbox_paths() -> dict[str, str]:
+    return _active_metadata_field("sandbox_images")
 
 
 def _resolve_image(image_id: str | None) -> tuple[str, Path]:
@@ -59,8 +110,7 @@ def _resolve_image(image_id: str | None) -> tuple[str, Path]:
         return image_id, path
 
     if len(images) == 1:
-        resolved_id, path = next(iter(images.items()))
-        return resolved_id, path
+        return next(iter(images.items()))
 
     available = ", ".join(sorted(images))
     raise ToolError(
@@ -75,15 +125,17 @@ def list_images() -> Tool:
         """
         List the images available for the current sample.
 
-        Returns image ids, filenames, and dimensions.
+        Returns image ids, filenames, dimensions, and local code_execution paths.
         Use these image ids with get_image_info and crop_image.
         """
         lines = ["Available images:"]
+        sandbox_paths = _active_sandbox_paths()
         for image_id, path in _active_images().items():
             with Image.open(path) as image:
                 width, height = image.size
             lines.append(
-                f"- {image_id}: {path.name} ({width}x{height} pixels)"
+                f"- {image_id}: {path.name} ({width}x{height} pixels, "
+                f"code_execution path: {sandbox_paths[image_id]})"
             )
         return "\n".join(lines)
 
@@ -103,12 +155,14 @@ def get_image_info() -> Tool:
           image_id: Optional image id from list_images().
         """
         resolved_id, path = _resolve_image(image_id or None)
+        sandbox_paths = _active_sandbox_paths()
         with Image.open(path) as image:
             width, height = image.size
             image_format = image.format or "unknown"
         return (
             f"Image '{resolved_id}' is file '{path.name}' with width={width}px, "
-            f"height={height}px, format={image_format}."
+            f"height={height}px, format={image_format}, and is available in "
+            f"code_execution at '{sandbox_paths[resolved_id]}'."
         )
 
     return execute
@@ -127,6 +181,8 @@ def crop_image() -> Tool:
         Crop a rectangular region from an available sample image and return it as a new image.
 
         Coordinates are pixel values measured from the top-left corner.
+        Small crops are automatically enlarged before being returned, so each
+        crop acts like a zoomed-in view of the selected region.
         If image_id is omitted and the sample has only one image, that image is used.
 
         Args:
@@ -154,12 +210,25 @@ def crop_image() -> Tool:
                 raise ToolError("The requested crop region is empty.")
 
             cropped = image.crop((x, y, right, lower))
+            crop_width = right - x
+            crop_height = lower - y
+            crop_max_dimension = max(crop_width, crop_height)
+            if crop_max_dimension < CROP_TARGET_MAX_DIMENSION:
+                scale = CROP_TARGET_MAX_DIMENSION / crop_max_dimension
+                cropped = cropped.resize(
+                    (
+                        max(1, round(crop_width * scale)),
+                        max(1, round(crop_height * scale)),
+                    ),
+                    Image.Resampling.LANCZOS,
+                )
 
         return [
             ContentText(
                 text=(
                     f"Cropped image '{resolved_id}' returned for region "
-                    f"x={x}, y={y}, width={right - x}, height={lower - y}."
+                    f"x={x}, y={y}, width={crop_width}, height={crop_height}. "
+                    f"Returned image size is {cropped.width}x{cropped.height} pixels."
                 )
             ),
             ContentImage(image=_image_data_url(cropped), detail="high"),
@@ -171,25 +240,21 @@ def crop_image() -> Tool:
 @task
 def stickfigure():
     return Task(
-        dataset=[
-            Sample(
-                input=[
-                    ChatMessageUser(
-                        content=[
-                            ContentImage(
-                                image=str(DATA_DIR / e["images"]),
-                                detail="high",
-                            ),
-                            ContentText(text=e["input"]),
-                        ]
-                    ),
-                ],
-                target=e["target"],
-                id=e["id"],
-                metadata={"images": _normalize_images(e["images"])},
-            )
-            for e in yaml.safe_load(QUESTIONS_FILE.read_text()) or []
+        dataset=[_sample_from_entry(e) for e in yaml.safe_load(QUESTIONS_FILE.read_text()) or []],
+        solver=[
+            use_tools(
+                list_images(),
+                get_image_info(),
+                crop_image(),
+                code_execution(
+                    providers={
+                        "openai": False,
+                        "python": {"timeout": 60},
+                    }
+                ),
+            ),
+            generate(),
         ],
-        solver=[use_tools(list_images(), get_image_info(), crop_image()), generate()],
+        sandbox="local",
         scorer=model_graded_qa(model="openai/gpt-5.4-mini"),
     )
